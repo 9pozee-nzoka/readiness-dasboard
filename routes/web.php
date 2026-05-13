@@ -1,13 +1,13 @@
 <?php
 
-use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminEventController;
 use App\Http\Controllers\Admin\AdminStaffController;
 use App\Http\Controllers\Admin\AdminVisitorController;
 use App\Http\Controllers\Admin\EventTypeRequirementController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\ReminderController;
@@ -77,6 +77,7 @@ Route::middleware('auth')->group(function () {
         // Event type requirement templates
         Route::get('event-type-requirements', [EventTypeRequirementController::class, 'index'])->name('event-type-requirements.index');
         Route::post('event-type-requirements', [EventTypeRequirementController::class, 'store'])->name('event-type-requirements.store');
+        Route::put('event-type-requirements/{eventTypeRequirement}', [EventTypeRequirementController::class, 'update'])->name('event-type-requirements.update');
         Route::patch('event-type-requirements/{eventTypeRequirement}/toggle', [EventTypeRequirementController::class, 'toggle'])->name('event-type-requirements.toggle');
         Route::delete('event-type-requirements/{eventTypeRequirement}', [EventTypeRequirementController::class, 'destroy'])->name('event-type-requirements.destroy');
     });
