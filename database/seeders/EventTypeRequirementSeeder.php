@@ -14,334 +14,333 @@ class EventTypeRequirementSeeder extends Seeder
 
         /**
          * Template library.
-         * Format: event_type → department_slug → [ [desc, priority, deadline_days_before], ... ]
-         * priority: critical | high | medium | low
-         * deadline_days_before: days before the event date (null = no deadline)
+         * Format: event_type → department_slug → [ [description, priority], ... ]
+         * Deadlines are set manually by the admin per template — null by default.
          */
         $templates = [
             'Meeting' => [
-                'ict'             => [
-                    ['Set up audio-visual equipment',   'critical', 1],
-                    ['Test internet connectivity',      'high',     1],
-                    ['Configure video conferencing',    'high',     1],
+                'ict' => [
+                    ['Set up audio-visual equipment',        'critical'],
+                    ['Test internet connectivity',           'high'],
+                    ['Configure video conferencing',         'high'],
                 ],
-                'finance'         => [
-                    ['Prepare budget summary',          'high',     2],
-                    ['Confirm petty cash float',        'medium',   1],
+                'finance' => [
+                    ['Prepare budget summary',               'high'],
+                    ['Confirm petty cash float',             'medium'],
                 ],
-                'administration'  => [
-                    ['Prepare agenda and briefing documents', 'critical', 2],
-                    ['Confirm attendance list',               'high',     2],
-                    ['Send invitations and reminders',        'high',     3],
-                    ['Prepare minutes template',              'medium',   1],
+                'administration' => [
+                    ['Prepare agenda and briefing documents', 'critical'],
+                    ['Confirm attendance list',              'high'],
+                    ['Send invitations and reminders',       'high'],
+                    ['Prepare minutes template',             'medium'],
                 ],
-                'security'        => [
-                    ['Brief security on access control', 'high',   1],
-                    ['Prepare visitor log sheets',       'medium', 1],
+                'security' => [
+                    ['Brief security on access control',     'high'],
+                    ['Prepare visitor log sheets',           'medium'],
                 ],
-                'logistics'       => [
-                    ['Coordinate transport and parking', 'medium', 2],
-                    ['Arrange equipment delivery',       'medium', 2],
+                'logistics' => [
+                    ['Coordinate transport and parking',     'medium'],
+                    ['Arrange equipment delivery',           'medium'],
                 ],
-                'communications'  => [
-                    ['Prepare press releases',           'medium', 3],
-                    ['Set up social media coverage',     'low',    2],
+                'communications' => [
+                    ['Prepare press releases',               'medium'],
+                    ['Set up social media coverage',         'low'],
                 ],
-                'facilities'      => [
-                    ['Prepare venue layout and seating', 'high',   1],
-                    ['Ensure venue cleanliness',         'medium', 1],
-                    ['Check lighting and HVAC',          'medium', 1],
+                'facilities' => [
+                    ['Prepare venue layout and seating',     'high'],
+                    ['Ensure venue cleanliness',             'medium'],
+                    ['Check lighting and HVAC',              'medium'],
                 ],
                 'human-resources' => [
-                    ['Confirm staff duty roster',        'high',   2],
-                    ['Prepare name tags',                'medium', 1],
+                    ['Confirm staff duty roster',            'high'],
+                    ['Prepare name tags',                    'medium'],
                 ],
-                'protocol'        => [
-                    ['Confirm VIP protocol arrangements', 'critical', 2],
-                    ['Prepare VIP seating plan',          'high',     1],
+                'protocol' => [
+                    ['Confirm VIP protocol arrangements',    'critical'],
+                    ['Prepare VIP seating plan',             'high'],
                 ],
-                'catering'        => [
-                    ['Arrange refreshments',             'high',   1],
-                    ['Confirm dietary requirements',     'medium', 2],
+                'catering' => [
+                    ['Arrange refreshments',                 'high'],
+                    ['Confirm dietary requirements',         'medium'],
                 ],
             ],
 
             'Training' => [
-                'ict'             => [
-                    ['Set up training computers',                    'critical', 1],
-                    ['Test projector and screen',                    'high',     1],
-                    ['Prepare training materials on shared drive',   'high',     2],
+                'ict' => [
+                    ['Set up training computers',                   'critical'],
+                    ['Test projector and screen',                   'high'],
+                    ['Prepare training materials on shared drive',  'high'],
                 ],
-                'finance'         => [
-                    ['Process trainer payments',         'high',   3],
-                    ['Confirm training budget',          'medium', 5],
+                'finance' => [
+                    ['Process trainer payments',                    'high'],
+                    ['Confirm training budget',                     'medium'],
                 ],
-                'administration'  => [
-                    ['Prepare training schedule',        'critical', 3],
-                    ['Send participant invitations',     'high',     5],
-                    ['Prepare attendance register',      'medium',   1],
+                'administration' => [
+                    ['Prepare training schedule',                   'critical'],
+                    ['Send participant invitations',                'high'],
+                    ['Prepare attendance register',                 'medium'],
                 ],
-                'security'        => [
-                    ['Brief security on participant access', 'medium', 1],
-                    ['Prepare visitor log sheets',           'low',    1],
+                'security' => [
+                    ['Brief security on participant access',        'medium'],
+                    ['Prepare visitor log sheets',                  'low'],
                 ],
-                'logistics'       => [
-                    ['Arrange transport for participants', 'medium', 2],
-                    ['Deliver training materials',         'high',   1],
+                'logistics' => [
+                    ['Arrange transport for participants',          'medium'],
+                    ['Deliver training materials',                  'high'],
                 ],
-                'communications'  => [
-                    ['Prepare training announcement',    'medium', 5],
-                    ['Arrange photography',              'low',    1],
+                'communications' => [
+                    ['Prepare training announcement',               'medium'],
+                    ['Arrange photography',                         'low'],
                 ],
-                'facilities'      => [
-                    ['Set up training room layout',                  'high',   1],
-                    ['Ensure whiteboard and markers available',      'medium', 1],
-                    ['Check room temperature',                       'low',    1],
+                'facilities' => [
+                    ['Set up training room layout',                 'high'],
+                    ['Ensure whiteboard and markers available',     'medium'],
+                    ['Check room temperature',                      'low'],
                 ],
                 'human-resources' => [
-                    ['Confirm participant list',         'high',   3],
-                    ['Prepare certificates',             'medium', 2],
-                    ['Brief event volunteers',           'medium', 1],
+                    ['Confirm participant list',                    'high'],
+                    ['Prepare certificates',                        'medium'],
+                    ['Brief event volunteers',                      'medium'],
                 ],
-                'protocol'        => [
-                    ['Coordinate MC and programme flow', 'medium', 2],
+                'protocol' => [
+                    ['Coordinate MC and programme flow',            'medium'],
                 ],
-                'catering'        => [
-                    ['Arrange tea breaks and lunch',     'high',   1],
-                    ['Confirm dietary requirements',     'medium', 2],
+                'catering' => [
+                    ['Arrange tea breaks and lunch',                'high'],
+                    ['Confirm dietary requirements',                'medium'],
                 ],
             ],
 
             'Ceremony' => [
-                'ict'             => [
-                    ['Set up PA system and microphones',         'critical', 2],
-                    ['Test audio-visual equipment',              'critical', 1],
-                    ['Arrange live streaming if required',       'high',     3],
+                'ict' => [
+                    ['Set up PA system and microphones',            'critical'],
+                    ['Test audio-visual equipment',                 'critical'],
+                    ['Arrange live streaming if required',          'high'],
                 ],
-                'finance'         => [
-                    ['Prepare event budget',             'high',   7],
-                    ['Process vendor payments',          'critical', 3],
-                    ['Confirm petty cash float',         'medium', 1],
+                'finance' => [
+                    ['Prepare event budget',                        'high'],
+                    ['Process vendor payments',                     'critical'],
+                    ['Confirm petty cash float',                    'medium'],
                 ],
-                'administration'  => [
-                    ['Prepare programme booklet',        'critical', 3],
-                    ['Confirm guest list',               'high',     5],
-                    ['Send formal invitations',          'high',     7],
+                'administration' => [
+                    ['Prepare programme booklet',                   'critical'],
+                    ['Confirm guest list',                          'high'],
+                    ['Send formal invitations',                     'high'],
                 ],
-                'security'        => [
-                    ['Set up perimeter security',        'critical', 1],
-                    ['Coordinate with external security','high',     2],
-                    ['Prepare VIP access control',       'critical', 1],
+                'security' => [
+                    ['Set up perimeter security',                   'critical'],
+                    ['Coordinate with external security',           'high'],
+                    ['Prepare VIP access control',                  'critical'],
                 ],
-                'logistics'       => [
-                    ['Coordinate transport and parking', 'high',   2],
-                    ['Arrange stage and podium setup',   'critical', 2],
-                    ['Confirm supplier deliveries',      'high',   3],
+                'logistics' => [
+                    ['Coordinate transport and parking',            'high'],
+                    ['Arrange stage and podium setup',              'critical'],
+                    ['Confirm supplier deliveries',                 'high'],
                 ],
-                'communications'  => [
-                    ['Arrange photography and videography', 'high',   1],
-                    ['Prepare press releases',              'medium', 5],
-                    ['Set up social media coverage',        'medium', 3],
-                    ['Prepare signage and banners',         'high',   3],
+                'communications' => [
+                    ['Arrange photography and videography',         'high'],
+                    ['Prepare press releases',                      'medium'],
+                    ['Set up social media coverage',                'medium'],
+                    ['Prepare signage and banners',                 'high'],
                 ],
-                'facilities'      => [
-                    ['Prepare venue layout and seating', 'critical', 2],
-                    ['Arrange flowers and decorations',  'high',     1],
-                    ['Ensure venue cleanliness',         'high',     1],
-                    ['Check lighting',                   'high',     1],
+                'facilities' => [
+                    ['Prepare venue layout and seating',            'critical'],
+                    ['Arrange flowers and decorations',             'high'],
+                    ['Ensure venue cleanliness',                    'high'],
+                    ['Check lighting',                              'high'],
                 ],
                 'human-resources' => [
-                    ['Confirm staff duty roster',        'high',   3],
-                    ['Brief event volunteers',           'high',   1],
-                    ['Prepare name tags and welcome packs', 'medium', 2],
+                    ['Confirm staff duty roster',                   'high'],
+                    ['Brief event volunteers',                      'high'],
+                    ['Prepare name tags and welcome packs',         'medium'],
                 ],
-                'protocol'        => [
-                    ['Confirm VIP protocol arrangements', 'critical', 3],
-                    ['Prepare VIP seating plan',          'critical', 2],
-                    ['Coordinate MC and programme flow',  'high',     2],
-                    ['Arrange VIP parking',               'high',     1],
+                'protocol' => [
+                    ['Confirm VIP protocol arrangements',           'critical'],
+                    ['Prepare VIP seating plan',                    'critical'],
+                    ['Coordinate MC and programme flow',            'high'],
+                    ['Arrange VIP parking',                         'high'],
                 ],
-                'catering'        => [
-                    ['Arrange catering and refreshments', 'critical', 2],
-                    ['Confirm dietary requirements',      'high',     3],
-                    ['Set up catering stations',          'high',     1],
-                    ['Coordinate catering staff',         'medium',   1],
+                'catering' => [
+                    ['Arrange catering and refreshments',           'critical'],
+                    ['Confirm dietary requirements',                'high'],
+                    ['Set up catering stations',                    'high'],
+                    ['Coordinate catering staff',                   'medium'],
                 ],
             ],
 
             'Forum' => [
-                'ict'             => [
-                    ['Set up audio-visual equipment',    'critical', 1],
-                    ['Test internet connectivity',       'high',     1],
-                    ['Configure presentation systems',   'high',     1],
+                'ict' => [
+                    ['Set up audio-visual equipment',               'critical'],
+                    ['Test internet connectivity',                  'high'],
+                    ['Configure presentation systems',              'high'],
                 ],
-                'finance'         => [
-                    ['Prepare event budget',             'high',   5],
-                    ['Process speaker payments',         'high',   3],
+                'finance' => [
+                    ['Prepare event budget',                        'high'],
+                    ['Process speaker payments',                    'high'],
                 ],
-                'administration'  => [
-                    ['Prepare agenda',                   'critical', 3],
-                    ['Confirm speaker list',             'high',     5],
-                    ['Send invitations',                 'high',     7],
-                    ['Prepare discussion papers',        'medium',   3],
+                'administration' => [
+                    ['Prepare agenda',                              'critical'],
+                    ['Confirm speaker list',                        'high'],
+                    ['Send invitations',                            'high'],
+                    ['Prepare discussion papers',                   'medium'],
                 ],
-                'security'        => [
-                    ['Brief security on access control', 'high',   1],
-                    ['Prepare visitor log sheets',       'medium', 1],
+                'security' => [
+                    ['Brief security on access control',            'high'],
+                    ['Prepare visitor log sheets',                  'medium'],
                 ],
-                'logistics'       => [
-                    ['Coordinate transport',             'medium', 2],
-                    ['Arrange equipment delivery',       'medium', 2],
+                'logistics' => [
+                    ['Coordinate transport',                        'medium'],
+                    ['Arrange equipment delivery',                  'medium'],
                 ],
-                'communications'  => [
-                    ['Prepare press releases',           'medium', 5],
-                    ['Arrange photography',              'low',    1],
-                    ['Set up social media coverage',     'medium', 3],
+                'communications' => [
+                    ['Prepare press releases',                      'medium'],
+                    ['Arrange photography',                         'low'],
+                    ['Set up social media coverage',                'medium'],
                 ],
-                'facilities'      => [
-                    ['Prepare venue layout',             'high',   1],
-                    ['Ensure venue cleanliness',         'medium', 1],
-                    ['Check lighting and HVAC',          'medium', 1],
+                'facilities' => [
+                    ['Prepare venue layout',                        'high'],
+                    ['Ensure venue cleanliness',                    'medium'],
+                    ['Check lighting and HVAC',                     'medium'],
                 ],
                 'human-resources' => [
-                    ['Confirm staff duty roster',        'high',   2],
-                    ['Brief event volunteers',           'medium', 1],
+                    ['Confirm staff duty roster',                   'high'],
+                    ['Brief event volunteers',                      'medium'],
                 ],
-                'protocol'        => [
-                    ['Coordinate MC and programme flow', 'high',   2],
-                    ['Confirm VIP arrangements',         'high',   2],
+                'protocol' => [
+                    ['Coordinate MC and programme flow',            'high'],
+                    ['Confirm VIP arrangements',                    'high'],
                 ],
-                'catering'        => [
-                    ['Arrange refreshments',             'high',   1],
-                    ['Confirm dietary requirements',     'medium', 2],
+                'catering' => [
+                    ['Arrange refreshments',                        'high'],
+                    ['Confirm dietary requirements',                'medium'],
                 ],
             ],
 
             'Review' => [
-                'ict'             => [
-                    ['Set up presentation equipment',    'high',   1],
-                    ['Prepare shared document access',   'medium', 2],
+                'ict' => [
+                    ['Set up presentation equipment',               'high'],
+                    ['Prepare shared document access',              'medium'],
                 ],
-                'finance'         => [
-                    ['Prepare financial reports',        'critical', 3],
-                    ['Compile budget vs actual analysis','high',     3],
+                'finance' => [
+                    ['Prepare financial reports',                   'critical'],
+                    ['Compile budget vs actual analysis',           'high'],
                 ],
-                'administration'  => [
-                    ['Prepare review agenda',            'high',   2],
-                    ['Compile performance reports',      'high',   3],
-                    ['Send meeting invitations',         'medium', 5],
+                'administration' => [
+                    ['Prepare review agenda',                       'high'],
+                    ['Compile performance reports',                 'high'],
+                    ['Send meeting invitations',                    'medium'],
                 ],
-                'security'        => [
-                    ['Brief security on access',         'low',    1],
+                'security' => [
+                    ['Brief security on access',                    'low'],
                 ],
-                'logistics'       => [
-                    ['Arrange transport',                'low',    2],
+                'logistics' => [
+                    ['Arrange transport',                           'low'],
                 ],
-                'communications'  => [
-                    ['Prepare summary report for distribution', 'medium', 2],
+                'communications' => [
+                    ['Prepare summary report for distribution',     'medium'],
                 ],
-                'facilities'      => [
-                    ['Prepare meeting room',             'high',   1],
-                    ['Ensure refreshments available',    'medium', 1],
+                'facilities' => [
+                    ['Prepare meeting room',                        'high'],
+                    ['Ensure refreshments available',               'medium'],
                 ],
                 'human-resources' => [
-                    ['Compile HR performance data',      'high',   3],
-                    ['Prepare attendance records',       'medium', 2],
+                    ['Compile HR performance data',                 'high'],
+                    ['Prepare attendance records',                  'medium'],
                 ],
-                'protocol'        => [
-                    ['Coordinate meeting flow',          'medium', 1],
+                'protocol' => [
+                    ['Coordinate meeting flow',                     'medium'],
                 ],
-                'catering'        => [
-                    ['Arrange refreshments',             'medium', 1],
+                'catering' => [
+                    ['Arrange refreshments',                        'medium'],
                 ],
             ],
 
             'Retreat' => [
-                'ict'             => [
-                    ['Set up presentation equipment',   'high',   2],
-                    ['Ensure Wi-Fi connectivity at venue', 'critical', 3],
+                'ict' => [
+                    ['Set up presentation equipment',               'high'],
+                    ['Ensure Wi-Fi connectivity at venue',          'critical'],
                 ],
-                'finance'         => [
-                    ['Prepare retreat budget',           'critical', 7],
-                    ['Process accommodation payments',   'critical', 5],
-                    ['Confirm per diem allowances',      'high',     3],
+                'finance' => [
+                    ['Prepare retreat budget',                      'critical'],
+                    ['Process accommodation payments',              'critical'],
+                    ['Confirm per diem allowances',                 'high'],
                 ],
-                'administration'  => [
-                    ['Prepare retreat programme',        'critical', 5],
-                    ['Confirm participant list',         'high',     7],
-                    ['Book accommodation',               'critical', 7],
+                'administration' => [
+                    ['Prepare retreat programme',                   'critical'],
+                    ['Confirm participant list',                    'high'],
+                    ['Book accommodation',                          'critical'],
                 ],
-                'security'        => [
-                    ['Coordinate security at retreat venue', 'high', 2],
+                'security' => [
+                    ['Coordinate security at retreat venue',        'high'],
                 ],
-                'logistics'       => [
-                    ['Arrange transport to venue',       'critical', 3],
-                    ['Coordinate luggage handling',      'medium',   1],
+                'logistics' => [
+                    ['Arrange transport to venue',                  'critical'],
+                    ['Coordinate luggage handling',                 'medium'],
                 ],
-                'communications'  => [
-                    ['Prepare retreat communications',   'medium', 5],
-                    ['Arrange photography',              'low',    1],
+                'communications' => [
+                    ['Prepare retreat communications',              'medium'],
+                    ['Arrange photography',                         'low'],
                 ],
-                'facilities'      => [
-                    ['Confirm venue facilities',         'high',   5],
-                    ['Arrange team-building equipment',  'medium', 3],
+                'facilities' => [
+                    ['Confirm venue facilities',                    'high'],
+                    ['Arrange team-building equipment',             'medium'],
                 ],
                 'human-resources' => [
-                    ['Confirm participant list',         'high',   7],
-                    ['Prepare team-building activities', 'high',   5],
-                    ['Brief facilitators',               'high',   2],
+                    ['Confirm participant list',                    'high'],
+                    ['Prepare team-building activities',            'high'],
+                    ['Brief facilitators',                          'high'],
                 ],
-                'protocol'        => [
-                    ['Coordinate programme flow',        'high',   3],
-                    ['Arrange VIP accommodation',        'high',   5],
+                'protocol' => [
+                    ['Coordinate programme flow',                   'high'],
+                    ['Arrange VIP accommodation',                   'high'],
                 ],
-                'catering'        => [
-                    ['Arrange all meals',                'critical', 3],
-                    ['Confirm dietary requirements',     'high',     5],
-                    ['Coordinate catering staff',        'medium',   2],
+                'catering' => [
+                    ['Arrange all meals',                           'critical'],
+                    ['Confirm dietary requirements',                'high'],
+                    ['Coordinate catering staff',                   'medium'],
                 ],
             ],
 
             'Workshop' => [
-                'ict'             => [
-                    ['Set up computers and software',   'critical', 1],
-                    ['Test projector',                  'high',     1],
-                    ['Prepare workshop materials on shared drive', 'high', 2],
+                'ict' => [
+                    ['Set up computers and software',               'critical'],
+                    ['Test projector',                              'high'],
+                    ['Prepare workshop materials on shared drive',  'high'],
                 ],
-                'finance'         => [
-                    ['Process facilitator payments',    'high',   3],
-                    ['Confirm workshop budget',         'medium', 5],
+                'finance' => [
+                    ['Process facilitator payments',                'high'],
+                    ['Confirm workshop budget',                     'medium'],
                 ],
-                'administration'  => [
-                    ['Prepare workshop schedule',       'critical', 3],
-                    ['Send participant invitations',    'high',     5],
-                    ['Prepare attendance register',     'medium',   1],
+                'administration' => [
+                    ['Prepare workshop schedule',                   'critical'],
+                    ['Send participant invitations',                'high'],
+                    ['Prepare attendance register',                 'medium'],
                 ],
-                'security'        => [
-                    ['Brief security on participant access', 'medium', 1],
+                'security' => [
+                    ['Brief security on participant access',        'medium'],
                 ],
-                'logistics'       => [
-                    ['Deliver workshop materials',      'high',   1],
-                    ['Arrange transport',               'medium', 2],
+                'logistics' => [
+                    ['Deliver workshop materials',                  'high'],
+                    ['Arrange transport',                           'medium'],
                 ],
-                'communications'  => [
-                    ['Prepare workshop announcement',   'medium', 5],
-                    ['Arrange photography',             'low',    1],
+                'communications' => [
+                    ['Prepare workshop announcement',               'medium'],
+                    ['Arrange photography',                         'low'],
                 ],
-                'facilities'      => [
-                    ['Set up workshop room',            'high',   1],
-                    ['Ensure flip charts and markers available', 'medium', 1],
+                'facilities' => [
+                    ['Set up workshop room',                        'high'],
+                    ['Ensure flip charts and markers available',    'medium'],
                 ],
                 'human-resources' => [
-                    ['Confirm participant list',        'high',   3],
-                    ['Brief facilitators',              'high',   2],
+                    ['Confirm participant list',                    'high'],
+                    ['Brief facilitators',                          'high'],
                 ],
-                'protocol'        => [
-                    ['Coordinate programme flow',       'medium', 2],
+                'protocol' => [
+                    ['Coordinate programme flow',                   'medium'],
                 ],
-                'catering'        => [
-                    ['Arrange tea breaks',              'high',   1],
-                    ['Confirm dietary requirements',    'medium', 2],
+                'catering' => [
+                    ['Arrange tea breaks',                          'high'],
+                    ['Confirm dietary requirements',                'medium'],
                 ],
             ],
         ];
@@ -353,18 +352,18 @@ class EventTypeRequirementSeeder extends Seeder
                 if (! $deptId) {
                     continue;
                 }
-                foreach ($requirements as [$description, $priority, $deadlineDaysBefore]) {
+                foreach ($requirements as [$description, $priority]) {
                     EventTypeRequirement::firstOrCreate(
                         [
-                            'event_type'    => $eventType,
+                            'event_type' => $eventType,
                             'department_id' => $deptId,
-                            'description'   => $description,
+                            'description' => $description,
                         ],
                         [
-                            'priority'             => $priority,
-                            'deadline_days_before' => $deadlineDaysBefore,
-                            'sort_order'           => $order++,
-                            'is_active'            => true,
+                            'priority' => $priority,
+                            'deadline' => null, // admin sets deadlines manually
+                            'sort_order' => $order++,
+                            'is_active' => true,
                         ]
                     );
                 }

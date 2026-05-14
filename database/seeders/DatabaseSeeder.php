@@ -39,11 +39,13 @@ class DatabaseSeeder extends Seeder
         ]));
 
         // ── Users ─────────────────────────────────────────────────
+        $demoPassword = env('DEMO_PASSWORD', 'demo123');
+
         // Admin
         User::create([
             'name'          => 'System Admin',
-            'email'         => 'admin@dashboard.local',
-            'password'      => Hash::make('password'),
+            'email'         => env('DEMO_ADMIN_EMAIL', 'admin@example.com'),
+            'password'      => Hash::make($demoPassword),
             'role'          => UserRole::Admin,
             'department_id' => null,
             'is_approved'   => true,
@@ -53,8 +55,8 @@ class DatabaseSeeder extends Seeder
         // Director
         User::create([
             'name'          => 'The Director',
-            'email'         => 'director@dashboard.local',
-            'password'      => Hash::make('password'),
+            'email'         => env('DEMO_DIRECTOR_EMAIL', 'director@example.com'),
+            'password'      => Hash::make($demoPassword),
             'role'          => UserRole::Director,
             'department_id' => null,
             'is_approved'   => true,
@@ -65,8 +67,8 @@ class DatabaseSeeder extends Seeder
         foreach ($departments as $dept) {
             User::create([
                 'name'           => 'HOD '.$dept->name,
-                'email'          => 'hod.'.Str::slug($dept->name).'@dashboard.local',
-                'password'       => Hash::make('password'),
+                'email'          => 'hod.'.Str::slug($dept->name).'@example.com',
+                'password'       => Hash::make($demoPassword),
                 'role'           => UserRole::Hod,
                 'department_id'  => $dept->id,
                 'declared_level' => 'hod',
@@ -76,8 +78,8 @@ class DatabaseSeeder extends Seeder
 
             User::create([
                 'name'           => 'Staff '.$dept->name,
-                'email'          => 'staff.'.Str::slug($dept->name).'@dashboard.local',
-                'password'       => Hash::make('password'),
+                'email'          => 'staff.'.Str::slug($dept->name).'@example.com',
+                'password'       => Hash::make($demoPassword),
                 'role'           => UserRole::Employee,
                 'department_id'  => $dept->id,
                 'declared_level' => 'employee',

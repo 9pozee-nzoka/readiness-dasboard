@@ -60,7 +60,6 @@
                         <div>
                             <label for="event_date" class="block text-sm font-medium text-gray-700 mb-1">Date <span class="text-red-500">*</span></label>
                             <input type="date" name="event_date" id="event_date" value="{{ old('event_date') }}"
-                                x-model="eventDate"
                                 class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
                         </div>
                         <div>
@@ -159,10 +158,10 @@
                                                     <option value="low"      :selected="tmpl.priority === 'low'">⚪ Low</option>
                                                 </select>
 
-                                                {{-- Deadline (auto-computed from deadline_days_before, editable) --}}
+                                                {{-- Deadline (from template, editable) --}}
                                                 <input type="date"
                                                     :name="'template_deadline[' + tmpl.id + ']'"
-                                                    :value="computedDeadline(tmpl)"
+                                                    :value="tmpl.deadline || ''"
                                                     class="rounded-lg border border-gray-300 px-2 py-1 text-xs focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 w-32"
                                                     @click.stop>
                                             </div>
@@ -283,7 +282,6 @@
             return {
                 selectedType: '{{ old('type') }}',
                 customType: '',
-                eventDate: '{{ old('event_date') }}',
                 currentTemplates: {},
                 hasTemplates: false,
                 selectedIds: [],
@@ -338,18 +336,6 @@
 
                 deselectAll() {
                     this.selectedIds = [];
-                },
-
-                /**
-                 * Compute the deadline date from deadline_days_before and the event date.
-                 * Returns a yyyy-mm-dd string or '' if not computable.
-                 */
-                computedDeadline(tmpl) {
-                    if (!tmpl.deadline_days_before || !this.eventDate) return '';
-                    const d = new Date(this.eventDate);
-                    if (isNaN(d)) return '';
-                    d.setDate(d.getDate() - tmpl.deadline_days_before);
-                    return d.toISOString().split('T')[0];
                 },
 
                 addCustomRow() {

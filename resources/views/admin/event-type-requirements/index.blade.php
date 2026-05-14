@@ -80,9 +80,8 @@
             </div>
 
             <div>
-                <label class="block text-xs font-medium text-gray-500 mb-1">Days before</label>
-                <input type="number" name="deadline_days_before" min="0" max="365"
-                    placeholder="e.g. 2"
+                <label class="block text-xs font-medium text-gray-500 mb-1">Deadline</label>
+                <input type="date" name="deadline"
                     class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
             </div>
 
@@ -103,7 +102,7 @@
         <span class="flex items-center gap-1.5">
             <span class="w-2 h-2 rounded-full bg-gray-300"></span> Disabled
         </span>
-        <span class="text-gray-400">· Click <strong class="text-gray-600">Edit</strong> on any row to change its priority or deadline</span>
+        <span class="text-gray-400">· Click <strong class="text-gray-600">Edit</strong> on any row to change its priority or deadline date</span>
     </div>
 
     {{-- Templates grouped by event type ─────────────────────────── --}}
@@ -126,7 +125,7 @@
                     <div class="hidden sm:grid grid-cols-[1fr_110px_90px_110px_auto] gap-3 px-5 py-2 bg-gray-50/60 border-b border-gray-100 text-xs font-semibold text-gray-400 uppercase tracking-wide">
                         <span>Requirement</span>
                         <span>Priority</span>
-                        <span>Days before</span>
+                        <span>Deadline</span>
                         <span>Status</span>
                         <span>Actions</span>
                     </div>
@@ -162,13 +161,13 @@
 
                                         {{-- Deadline --}}
                                         <div class="mt-1 sm:mt-0">
-                                            @if ($tmpl->deadline_days_before !== null)
+                                            @if ($tmpl->deadline)
                                                 <span class="inline-flex items-center gap-1 text-xs font-medium text-gray-700 bg-gray-100 border border-gray-200 px-2 py-0.5 rounded">
                                                     <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                             d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                                     </svg>
-                                                    {{ $tmpl->deadline_days_before }}d before
+                                                    {{ $tmpl->deadline->format('d M Y') }}
                                                 </span>
                                             @else
                                                 <span class="text-xs text-gray-400 italic">No deadline</span>
@@ -235,20 +234,14 @@
                                                 </select>
                                             </div>
 
-                                            {{-- Deadline days before --}}
-                                            <div class="w-36">
+                                            {{-- Deadline --}}
+                                            <div class="w-40">
                                                 <label class="block text-xs font-medium text-gray-500 mb-1">
-                                                    Days before event
-                                                    <span class="text-gray-400 font-normal">(deadline)</span>
+                                                    Deadline
                                                 </label>
-                                                <div class="relative">
-                                                    <input type="number" name="deadline_days_before"
-                                                        value="{{ $tmpl->deadline_days_before }}"
-                                                        min="0" max="365"
-                                                        placeholder="e.g. 2"
-                                                        class="block w-full rounded-lg border border-gray-300 pl-3 pr-8 py-1.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-                                                    <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 pointer-events-none">d</span>
-                                                </div>
+                                                <input type="date" name="deadline"
+                                                    value="{{ $tmpl->deadline?->format('Y-m-d') }}"
+                                                    class="block w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
                                                 <p class="text-[10px] text-gray-400 mt-0.5">Leave blank for no deadline</p>
                                             </div>
 

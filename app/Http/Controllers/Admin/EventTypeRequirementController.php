@@ -45,7 +45,7 @@ class EventTypeRequirementController extends Controller
             'department_id' => ['required', 'exists:departments,id'],
             'description' => ['required', 'string', 'max:500'],
             'priority' => ['nullable', Rule::enum(Priority::class)],
-            'deadline_days_before' => ['nullable', 'integer', 'min:0', 'max:365'],
+            'deadline' => ['nullable', 'date'],
         ]);
 
         EventTypeRequirement::firstOrCreate(
@@ -56,7 +56,7 @@ class EventTypeRequirementController extends Controller
             ],
             [
                 'priority' => $validated['priority'] ?? 'medium',
-                'deadline_days_before' => $validated['deadline_days_before'] ?? null,
+                'deadline' => $validated['deadline'] ?? null,
                 'is_active' => true,
                 'sort_order' => 0,
             ]
@@ -69,13 +69,13 @@ class EventTypeRequirementController extends Controller
     {
         $validated = $request->validate([
             'priority' => ['required', Rule::enum(Priority::class)],
-            'deadline_days_before' => ['nullable', 'integer', 'min:0', 'max:365'],
+            'deadline' => ['nullable', 'date'],
             'description' => ['required', 'string', 'max:500'],
         ]);
 
         $eventTypeRequirement->update([
             'priority' => $validated['priority'],
-            'deadline_days_before' => $validated['deadline_days_before'] ?: null,
+            'deadline' => $validated['deadline'] ?: null,
             'description' => $validated['description'],
         ]);
 
@@ -90,7 +90,6 @@ class EventTypeRequirementController extends Controller
         return back()->with('success', 'Template requirement removed from "'.$type.'".');
     }
 
-    /** Toggle active/inactive without deleting. */
     public function toggle(EventTypeRequirement $eventTypeRequirement): RedirectResponse
     {
         $eventTypeRequirement->update(['is_active' => ! $eventTypeRequirement->is_active]);

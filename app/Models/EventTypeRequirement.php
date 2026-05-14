@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\Priority;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Collection;
 
 class EventTypeRequirement extends Model
 {
@@ -13,7 +14,7 @@ class EventTypeRequirement extends Model
         'department_id',
         'description',
         'priority',
-        'deadline_days_before',
+        'deadline',
         'sort_order',
         'is_active',
     ];
@@ -21,9 +22,9 @@ class EventTypeRequirement extends Model
     protected function casts(): array
     {
         return [
-            'is_active'            => 'boolean',
-            'priority'             => Priority::class,
-            'deadline_days_before' => 'integer',
+            'is_active' => 'boolean',
+            'priority' => Priority::class,
+            'deadline' => 'date',
         ];
     }
 
@@ -33,23 +34,11 @@ class EventTypeRequirement extends Model
     }
 
     /**
-     * Compute the concrete deadline date given an event date.
-     */
-    public function deadlineFor(\Carbon\Carbon $eventDate): ?\Carbon\Carbon
-    {
-        if ($this->deadline_days_before === null) {
-            return null;
-        }
-
-        return $eventDate->copy()->subDays($this->deadline_days_before);
-    }
-
-    /**
      * Get all active templates for a given event type, grouped by department.
      *
-     * @return \Illuminate\Support\Collection<int, \Illuminate\Support\Collection>
+     * @return Collection<int, Collection>
      */
-    public static function forType(string $eventType): \Illuminate\Support\Collection
+    public static function forType(string $eventType): Collection
     {
         return static::with('department')
             ->where('event_type', $eventType)
@@ -70,19 +59,19 @@ class EventTypeRequirement extends Model
         int $departmentId,
         string $description,
         string $priority = 'medium',
-        ?int $deadlineDaysBefore = null,
+        ?string $deadline = null,
     ): void {
         static::firstOrCreate(
             [
-                'event_type'    => $eventType,
+                'event_type' => $eventType,
                 'department_id' => $departmentId,
-                'description'   => $description,
+                'description' => $description,
             ],
             [
-                'priority'             => $priority,
-                'deadline_days_before' => $deadlineDaysBefore,
-                'is_active'            => true,
-                'sort_order'           => 0,
+                'priority' => $priority,
+                'deadline' => $deadline,
+                'is_active' => true,
+                'sort_order' => 0,
             ]
         );
     }
