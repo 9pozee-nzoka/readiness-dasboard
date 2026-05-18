@@ -240,31 +240,46 @@
     </div>
 
     {{-- ── Department readiness grid ────────────────────────────────── --}}
-    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-6">
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-6"
+         x-data="deptPanel()">
+
         <div class="flex items-center justify-between mb-5">
             <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Department Readiness</h2>
-            <span class="text-xs text-gray-400">{{ $deptReadiness->count() }} departments tracked</span>
+            <span class="text-xs text-gray-400">{{ $deptReadiness->count() }} departments tracked · <span class="text-indigo-500 font-medium">click a card to drill down</span></span>
         </div>
 
         @if ($deptReadiness->isEmpty())
             <p class="text-center text-gray-400 text-sm py-8">No department data for this week.</p>
         @else
+            {{-- Cards grid --}}
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-                @foreach ($deptReadiness as $dr)
+                @foreach ($deptReadiness as $index => $dr)
                     @php
-                        $dc      = $dr['classes'];
-                        $pct     = $dr['percentage'];
-                        $r       = 28;
-                        $circ    = 2 * M_PI * $r;
-                        $off     = $circ - ($pct / 100) * $circ;
-                        $stroke  = $pct === 100 ? '#22c55e' : ($pct > 0 ? '#f59e0b' : '#ef4444');
+                        $dc     = $dr['classes'];
+                        $pct    = $dr['percentage'];
+                        $r      = 28;
+                        $circ   = 2 * M_PI * $r;
+                        $off    = $circ - ($pct / 100) * $circ;
+                        $stroke = $pct === 100 ? '#22c55e' : ($pct > 0 ? '#f59e0b' : '#ef4444');
                     @endphp
-                    <a href="{{ route('dashboard.index', ['week' => $selectedWeek?->id]) }}"
-                        class="group relative flex flex-col items-center gap-2 p-4 rounded-xl border border-gray-100 hover:border-indigo-200 hover:shadow-md transition-all bg-gray-50/50 hover:bg-white">
+                    <button type="button"
+                        @click="open({{ $index }})"
+                        class="group relative flex flex-col items-center gap-2 p-4 rounded-xl border transition-all text-left w-full
+                            {{ $dr['criticalPending'] > 0 ? 'border-red-200 bg-red-50/30' : 'border-gray-100 bg-gray-50/50' }}
+                            hover:border-indigo-300 hover:bg-indigo-50/40 hover:shadow-md cursor-pointer"
+                        :class="activeIndex === {{ $index }} ? 'border-indigo-400 bg-indigo-50 shadow-md ring-2 ring-indigo-200' : ''">
 
                         {{-- Dept colour dot --}}
                         <div class="absolute top-3 left-3 w-2 h-2 rounded-full"
                              style="background-color: {{ $dr['department']->color }}"></div>
+
+                        {{-- Expand indicator --}}
+                        <div class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity"
+                             :class="activeIndex === {{ $index }} ? 'opacity-100' : ''">
+                            <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </div>
 
                         {{-- Mini donut --}}
                         <div class="relative w-16 h-16 mt-1">
@@ -306,10 +321,98 @@
                             </div>
                         @endif
 
-                        {{-- Task count --}}
                         <p class="text-[10px] text-gray-400">{{ $dr['completed'] }}/{{ $dr['total'] }} tasks</p>
-                    </a>
+                    </button>
                 @endforeach
+            </div>
+
+            {{-- ── Drill-down panel ── --}}
+            <div x-show="activeIndex !== null" x-cloak
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 translate-y-2"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100 translate-y-0"
+                 x-transition:leave-end="opacity-0 translate-y-2"
+                 class="mt-5 rounded-2xl border border-indigo-200 bg-indigo-50/30 overflow-hidden">
+
+                {{-- Panel header --}}
+                <div class="flex items-center justify-between px-5 py-4 bg-white border-b border-indigo-100">
+                    <div class="flex items-center gap-3">
+                        <div class="w-3 h-3 rounded-full shrink-0" :style="'background-color:' + activeDept.color"></div>
+                        <div>
+                            <h3 class="font-semibold text-gray-900 text-sm" x-text="activeDept.name + ' — Event Breakdown'"></h3>
+                            <p class="text-xs text-gray-500 mt-0.5">
+                                Readiness per event this week
+                            </p>
+                        </div>
+                    </div>
+                    <button type="button" @click="close()"
+                        class="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors text-gray-400 hover:text-gray-600">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                {{-- Event rows --}}
+                <div class="p-4">
+                    <template x-if="activeBreakdown.length === 0">
+                        <p class="text-center text-gray-400 text-sm py-6">No requirements for this department this week.</p>
+                    </template>
+
+                    <div class="space-y-3">
+                        <template x-for="eb in activeBreakdown" :key="eb.event_id">
+                            <a :href="eb.event_url"
+                               class="group flex items-center gap-4 bg-white rounded-xl border border-gray-100 hover:border-indigo-200 hover:shadow-sm px-4 py-3.5 transition-all">
+
+                                {{-- Date badge --}}
+                                <div class="shrink-0 w-10 text-center">
+                                    <p class="text-[10px] font-semibold text-gray-400 uppercase" x-text="eb.month"></p>
+                                    <p class="text-xl font-bold text-gray-800 leading-none" x-text="eb.day"></p>
+                                </div>
+
+                                <div class="w-px h-10 bg-gray-100 shrink-0"></div>
+
+                                {{-- Event info --}}
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <p class="text-sm font-semibold text-gray-900 group-hover:text-indigo-700 transition-colors truncate"
+                                           x-text="eb.event_name"></p>
+                                        <template x-if="eb.critical > 0">
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700"
+                                                  x-text="eb.critical + ' critical'"></span>
+                                        </template>
+                                        <template x-if="eb.overdue > 0">
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200"
+                                                  x-text="eb.overdue + ' overdue'"></span>
+                                        </template>
+                                    </div>
+                                    <p class="text-xs text-gray-400 mt-0.5" x-text="eb.event_type + (eb.venue ? ' · ' + eb.venue : '')"></p>
+
+                                    {{-- Progress bar --}}
+                                    <div class="mt-2 flex items-center gap-2">
+                                        <div class="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden">
+                                            <div class="h-2 rounded-full transition-all duration-500"
+                                                 :class="eb.pct === 100 ? 'bg-green-500' : eb.pct > 0 ? 'bg-amber-400' : 'bg-red-400'"
+                                                 :style="'width:' + eb.pct + '%'"></div>
+                                        </div>
+                                        <span class="text-xs font-semibold w-9 text-right shrink-0"
+                                              :class="eb.pct === 100 ? 'text-green-700' : eb.pct > 0 ? 'text-amber-700' : 'text-red-600'"
+                                              x-text="eb.pct + '%'"></span>
+                                    </div>
+                                    <p class="text-[10px] text-gray-400 mt-0.5"
+                                       x-text="eb.completed + '/' + eb.total + ' tasks completed'"></p>
+                                </div>
+
+                                {{-- Arrow --}}
+                                <svg class="w-4 h-4 text-gray-300 group-hover:text-indigo-400 shrink-0 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </a>
+                        </template>
+                    </div>
+                </div>
             </div>
 
             {{-- Readiness bar chart --}}
@@ -334,9 +437,7 @@
     </div>
 
     {{-- ── At-risk events detail ────────────────────────────────────── --}}
-    @if ($atRiskEvents->isNotEmpty())
-        <div class="bg-white rounded-2xl border border-red-200 shadow-sm p-6">
-            <div class="flex items-center gap-2 mb-4">
+    @if ($atRiskEvents->isNotEmpty())        <div class="bg-white rounded-2xl border border-red-200 shadow-sm p-6">            <div class="flex items-center gap-2 mb-4">
                 <div class="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center">
                     <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -374,5 +475,41 @@
             </div>
         </div>
     @endif
+
+    @push('scripts')
+    <style>[x-cloak] { display: none !important; }</style>
+    <script>
+        const deptData = @json($deptPanelData);
+
+        function deptPanel() {
+            return {
+                activeIndex: null,
+                activeDept: { name: '', color: '#6366f1' },
+                activeBreakdown: [],
+
+                open(index) {
+                    if (this.activeIndex === index) {
+                        this.close();
+                        return;
+                    }
+                    this.activeIndex     = index;
+                    this.activeDept      = { name: deptData[index].name, color: deptData[index].color };
+                    this.activeBreakdown = deptData[index].breakdown;
+
+                    this.$nextTick(() => {
+                        const panel = this.$el.querySelector('[x-show]');
+                        if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    });
+                },
+
+                close() {
+                    this.activeIndex     = null;
+                    this.activeDept      = { name: '', color: '#6366f1' };
+                    this.activeBreakdown = [];
+                },
+            };
+        }
+    </script>
+    @endpush
 
 </x-layouts.app>
