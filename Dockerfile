@@ -41,10 +41,11 @@ COPY . .
 
 # ── PHP dependencies ──────────────────────────────────────────────
 RUN composer install \
-        --no-dev \
-        --optimize-autoloader \
-        --no-interaction \
-        --prefer-dist
+    --no-dev \
+    --optimize-autoloader \
+    --no-interaction \
+    --prefer-dist \
+    --no-scripts
 
 # ── Frontend build (Vite) ─────────────────────────────────────────
 RUN npm ci && npm run build && rm -rf node_modules
@@ -57,9 +58,10 @@ RUN mkdir -p storage/framework/{sessions,views,cache} \
  && chmod -R 775 storage bootstrap/cache
 
 # ── Cache config/routes/views (avoid migrate here) ────────────────
-RUN php artisan config:cache \
- && php artisan route:cache \
- && php artisan view:cache
+RUN php artisan package:discover --ansi || true
+RUN php artisan config:cache || true
+RUN php artisan route:cache || true
+RUN php artisan view:cache || true
 
 # ── Nginx config ──────────────────────────────────────────────────
 COPY docker/nginx.conf /etc/nginx/nginx.conf
