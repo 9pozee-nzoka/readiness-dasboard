@@ -16,7 +16,8 @@ APP_NAME="${APP_NAME:-Readiness Dashboard}"
 APP_ENV="${APP_ENV:-production}"
 APP_KEY="${APP_KEY}"
 APP_DEBUG="${APP_DEBUG:-false}"
-APP_URL="${APP_URL:-http://localhost}"
+APP_URL="${APP_URL:-https://localhost}"
+ASSET_URL="${APP_URL:-https://localhost}"
 
 DB_CONNECTION=mysql
 DB_HOST="${DB_HOST}"
