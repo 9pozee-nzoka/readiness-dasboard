@@ -21,7 +21,11 @@
 
         {{-- Brand --}}
         <div class="flex items-center gap-3 px-5 py-5 border-b border-gray-700/60">
-            <img src="{{ asset('assets/logos/3.png') }}" alt="Logo" class="w-8 h-8 rounded-lg object-contain shrink-0">
+            <div class="flex items-center shrink-0">
+                <img src="{{ asset('assets/logos/1.png') }}" alt="" class="h-8 w-auto object-contain">
+                <img src="{{ asset('assets/logos/2.png') }}" alt="" class="h-8 w-auto object-contain">
+                <img src="{{ asset('assets/logos/3.png') }}" alt="" class="h-8 w-auto object-contain">
+            </div>
             <div>
                 <p class="font-semibold text-sm leading-tight">Admin Panel</p>
                 <p class="text-xs text-gray-400 leading-tight">Readiness Dashboard</p>

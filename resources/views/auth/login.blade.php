@@ -10,8 +10,14 @@
 
     <div class="w-full max-w-md">
         {{-- Logo / Brand --}}
-        <div class="text-center mb-8">
-            <img src="{{ asset('assets/logos/3.png') }}" alt="Logo" class="w-14 h-14 rounded-2xl mb-4 shadow-lg object-contain mx-auto">
+        <div class="flex justify-center mb-8">
+            <div class="flex items-center">
+                <img src="{{ asset('assets/logos/1.png') }}" alt="Logo 1" class="h-14 w-auto object-contain">
+                <img src="{{ asset('assets/logos/2.png') }}" alt="Logo 2" class="h-14 w-auto object-contain">
+                <img src="{{ asset('assets/logos/3.png') }}" alt="Logo 3" class="h-14 w-auto object-contain">
+            </div>
+        </div>
+        <div class="text-center mb-8 -mt-4">
             <h1 class="text-2xl font-bold text-gray-900">Event Readiness Dashboard</h1>
             <p class="text-sm text-gray-500 mt-1">Sign in to your account</p>
         </div>

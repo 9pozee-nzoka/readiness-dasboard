@@ -16,7 +16,11 @@
 
                 {{-- Brand --}}
                 <a href="{{ route('dashboard.index') }}" class="flex items-center gap-2">
-                    <img src="{{ asset('assets/logos/3.png') }}" alt="Logo" class="w-8 h-8 rounded-lg object-contain shrink-0">
+                    <div class="flex items-center shrink-0">
+                        <img src="{{ asset('assets/logos/1.png') }}" alt="" class="h-8 w-auto object-contain">
+                        <img src="{{ asset('assets/logos/2.png') }}" alt="" class="h-8 w-auto object-contain">
+                        <img src="{{ asset('assets/logos/3.png') }}" alt="" class="h-8 w-auto object-contain">
+                    </div>
                     <span class="font-semibold text-gray-900 text-lg hidden sm:block">Readiness Dashboard</span>
                 </a>
 

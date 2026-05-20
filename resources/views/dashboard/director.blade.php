@@ -1,6 +1,8 @@
 <x-layouts.app>
     <x-slot:title>Director Overview</x-slot:title>
 
+    <style>[x-cloak] { display: none !important; }</style>
+
     {{-- ── Hero banner ──────────────────────────────────────────────── --}}
     <div class="relative -mx-4 sm:-mx-6 lg:-mx-8 -mt-8 mb-8 overflow-hidden">
         <div class="bg-gradient-to-br from-slate-800 via-slate-900 to-indigo-950 px-6 sm:px-10 lg:px-12 pt-10 pb-16">
@@ -240,6 +242,36 @@
     </div>
 
     {{-- ── Department readiness grid ────────────────────────────────── --}}
+
+    {{-- deptPanel must be defined before Alpine initialises the x-data below --}}
+    <script>
+        const deptData = @json($deptPanelData);
+        function deptPanel() {
+            return {
+                activeIndex: null,
+                activeDept: { name: '', color: '#6366f1' },
+                activeBreakdown: [],
+
+                open(index) {
+                    if (this.activeIndex === index) { this.close(); return; }
+                    this.activeIndex     = index;
+                    this.activeDept      = { name: deptData[index].name, color: deptData[index].color };
+                    this.activeBreakdown = deptData[index].breakdown;
+                    this.$nextTick(() => {
+                        const panel = this.$el.querySelector('[x-show]');
+                        if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    });
+                },
+
+                close() {
+                    this.activeIndex     = null;
+                    this.activeDept      = { name: '', color: '#6366f1' };
+                    this.activeBreakdown = [];
+                },
+            };
+        }
+    </script>
+
     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-6"
          x-data="deptPanel()">
 
@@ -475,41 +507,5 @@
             </div>
         </div>
     @endif
-
-    @push('scripts')
-    <style>[x-cloak] { display: none !important; }</style>
-    <script>
-        const deptData = @json($deptPanelData);
-
-        function deptPanel() {
-            return {
-                activeIndex: null,
-                activeDept: { name: '', color: '#6366f1' },
-                activeBreakdown: [],
-
-                open(index) {
-                    if (this.activeIndex === index) {
-                        this.close();
-                        return;
-                    }
-                    this.activeIndex     = index;
-                    this.activeDept      = { name: deptData[index].name, color: deptData[index].color };
-                    this.activeBreakdown = deptData[index].breakdown;
-
-                    this.$nextTick(() => {
-                        const panel = this.$el.querySelector('[x-show]');
-                        if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                    });
-                },
-
-                close() {
-                    this.activeIndex     = null;
-                    this.activeDept      = { name: '', color: '#6366f1' };
-                    this.activeBreakdown = [];
-                },
-            };
-        }
-    </script>
-    @endpush
 
 </x-layouts.app>
