@@ -108,6 +108,27 @@ class DashboardController extends Controller
                 ->filter(fn ($r) => $r->deadline && $r->deadline->isPast())
                 ->count();
 
+            // Per-event breakdown for the drill-down panel
+            $eventBreakdown = $events->map(function ($event) use ($dept) {
+                $reqs = $event->requirements->where('department_id', $dept->id);
+                $total = $reqs->count();
+                $completed = $reqs->where('is_completed', true)->count();
+                $pct = $total > 0 ? (int) round(($completed / $total) * 100) : 0;
+
+                $critical = $reqs->where('priority.value', Priority::Critical->value)->where('is_completed', false)->count();
+                $overdue = $reqs->where('is_completed', false)->filter(fn ($r) => $r->deadline && $r->deadline->isPast())->count();
+
+                return [
+                    'event' => $event,
+                    'total' => $total,
+                    'completed' => $completed,
+                    'pct' => $pct,
+                    'critical' => $critical,
+                    'overdue' => $overdue,
+                    'classes' => Department::ragClasses($pct),
+                ];
+            })->filter(fn ($e) => $e['total'] > 0)->values();
+
             return [
                 'department' => $dept,
                 'total' => $total,
@@ -117,6 +138,7 @@ class DashboardController extends Controller
                 'overdue' => $overdue,
                 'classes' => Department::ragClasses($pct),
                 'status' => Department::ragStatus($pct),
+                'eventBreakdown' => $eventBreakdown,
             ];
         })->filter(fn ($d) => $d['total'] > 0)->sortBy('percentage')->values();
 
@@ -132,8 +154,32 @@ class DashboardController extends Controller
         $criticalTotal = Requirement::whereIn('event_id', $allEventIds)->where('priority', Priority::Critical->value)->count();
         $criticalDone = Requirement::whereIn('event_id', $allEventIds)->where('priority', Priority::Critical->value)->where('is_completed', true)->count();
 
+        // Serialisable payload for the Alpine dept drill-down panel
+        $deptPanelData = $deptReadiness->map(function ($dr) {
+            return [
+                'name' => $dr['department']->name,
+                'color' => $dr['department']->color,
+                'breakdown' => $dr['eventBreakdown']->map(function ($eb) {
+                    return [
+                        'event_id' => $eb['event']->id,
+                        'event_name' => $eb['event']->name,
+                        'event_type' => $eb['event']->type,
+                        'venue' => $eb['event']->venue ?? '',
+                        'day' => $eb['event']->event_date->format('d'),
+                        'month' => $eb['event']->event_date->format('M'),
+                        'pct' => $eb['pct'],
+                        'total' => $eb['total'],
+                        'completed' => $eb['completed'],
+                        'critical' => $eb['critical'],
+                        'overdue' => $eb['overdue'],
+                        'event_url' => route('events.show', $eb['event']),
+                    ];
+                })->values()->all(),
+            ];
+        })->values();
+
         return view('dashboard.director', compact(
-            'weeks', 'selectedWeek', 'events', 'departments', 'deptReadiness',
+            'weeks', 'selectedWeek', 'events', 'departments', 'deptReadiness', 'deptPanelData',
             'totalEvents', 'fullyReady', 'inProgress', 'notStarted',
             'averageReadiness', 'criticalAlerts', 'overdueCount',
             'atRiskEvents', 'totalReqs', 'completedReqs', 'completionRate',
