@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\Priority;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -31,8 +32,8 @@ class Requirement extends Model
             'is_escalated' => 'boolean',
             'completed_at' => 'datetime',
             'escalated_at' => 'datetime',
-            'deadline'     => 'date',
-            'priority'     => Priority::class,
+            'deadline' => 'date',
+            'priority' => Priority::class,
         ];
     }
 
@@ -96,25 +97,33 @@ class Requirement extends Model
 
     // ── Scopes ────────────────────────────────────────────────────
 
-    public function scopePending(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    public function scopePending(Builder $query): Builder
     {
         return $query->where('is_completed', false);
     }
 
-    public function scopeCritical(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    public function scopeCritical(Builder $query): Builder
     {
         return $query->where('priority', Priority::Critical->value);
     }
 
-    public function scopeOverdue(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    public function scopeOverdue(Builder $query): Builder
     {
         return $query->where('is_completed', false)
             ->whereNotNull('deadline')
             ->where('deadline', '<', now()->toDateString());
     }
 
-    public function scopeByPriority(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    public function scopeByPriority(Builder $query): Builder
     {
-        return $query->orderByRaw("FIELD(priority, 'critical','high','medium','low')");
+        $orderCases = collect(Priority::cases())
+            ->map(fn (Priority $priority): string => sprintf(
+                "WHEN '%s' THEN %d",
+                $priority->value,
+                $priority->sortOrder(),
+            ))
+            ->implode(' ');
+
+        return $query->orderByRaw("CASE priority {$orderCases} ELSE 99 END");
     }
 }
