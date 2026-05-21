@@ -3,14 +3,14 @@ set -e
 
 cd /var/www/html
 
-# Generate app key if not set
+# ── Generate app key if not provided ──────────────────────────────
 if [ -z "$APP_KEY" ]; then
     php artisan key:generate --force
 fi
 
-# Write .env from environment variables (Render injects them directly)
-# Laravel reads env vars from the environment, so no .env file needed —
-# but we create a minimal one so artisan commands work correctly.
+# ── Write .env from Render environment variables ──────────────────
+# Order matters: write .env BEFORE config:cache so config/admin.php
+# picks up ADMIN_EMAIL / ADMIN_PASSWORD via env().
 cat > .env <<EOF
 APP_NAME="${APP_NAME:-Readiness Dashboard}"
 APP_ENV="${APP_ENV:-production}"
@@ -35,29 +35,38 @@ LOG_CHANNEL=stderr
 LOG_LEVEL=error
 
 FILESYSTEM_DISK=local
+
+ADMIN_EMAIL="${ADMIN_EMAIL}"
+ADMIN_PASSWORD="${ADMIN_PASSWORD}"
+ADMIN_NAME="${ADMIN_NAME:-System Admin}"
 EOF
 
-# Cache config for performance
+# ── Cache config / routes / views ─────────────────────────────────
+# config:cache must run AFTER .env is written so config/admin.php
+# reads the correct ADMIN_* values.
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
-# Run migrations (--force required in production)
+# ── Run migrations ────────────────────────────────────────────────
 php artisan migrate --force --no-interaction
 
-# Seed event type requirement templates if table is empty
+# ── Sync admin user from ADMIN_* env vars (runs every deploy) ─────
+php artisan db:seed --class=Database\\Seeders\\AdminUserSeeder --force --no-interaction
+
+# ── Seed event type requirement templates if empty ────────────────
 php artisan tinker --execute "
 if (App\Models\EventTypeRequirement::count() === 0) {
     Artisan::call('db:seed', ['--class' => 'EventTypeRequirementSeeder', '--force' => true]);
-    echo 'Templates seeded.' . PHP_EOL;
+    echo 'Requirement templates seeded.' . PHP_EOL;
+} else {
+    echo 'Templates already exist — skipping.' . PHP_EOL;
 }
 "
 
-# Fix permissions after cache generation
+# ── Fix permissions ───────────────────────────────────────────────
 chown -R www-data:www-data storage bootstrap/cache
 
-# Start PHP-FPM in background
+# ── Start PHP-FPM in background, Nginx in foreground ─────────────
 php-fpm -D
-
-# Start Nginx in foreground (keeps container alive)
 exec nginx -g 'daemon off;'
