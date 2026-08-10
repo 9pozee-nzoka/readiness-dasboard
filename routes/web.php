@@ -18,6 +18,7 @@ use App\Http\Controllers\DeliberationController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\KnowledgeBaseController;
 use App\Http\Controllers\NotificationsController;
+use App\Http\Controllers\RecurringIssueController;
 use App\Http\Controllers\ReminderController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RequirementController;
@@ -97,6 +98,17 @@ Route::middleware('auth')->group(function () {
     // ── Knowledge Base ────────────────────────────────────────────
     Route::get('knowledge-base', [KnowledgeBaseController::class, 'index'])->name('knowledge-base.index');
     Route::get('knowledge-base/{postEventReview}', [KnowledgeBaseController::class, 'show'])->name('knowledge-base.show');
+
+    // ── Recurring Issues ──────────────────────────────────────────
+    Route::get('recurring-issues', [RecurringIssueController::class, 'index'])->name('recurring-issues.index');
+    Route::get('recurring-issues/create', [RecurringIssueController::class, 'create'])->name('recurring-issues.create');
+    Route::post('recurring-issues', [RecurringIssueController::class, 'store'])->name('recurring-issues.store');
+    Route::get('recurring-issues/{recurringIssue}', [RecurringIssueController::class, 'show'])->name('recurring-issues.show');
+    Route::get('recurring-issues/{recurringIssue}/edit', [RecurringIssueController::class, 'edit'])->name('recurring-issues.edit');
+    Route::put('recurring-issues/{recurringIssue}', [RecurringIssueController::class, 'update'])->name('recurring-issues.update');
+    Route::delete('recurring-issues/{recurringIssue}', [RecurringIssueController::class, 'destroy'])->name('recurring-issues.destroy');
+    Route::patch('recurring-issues/{recurringIssue}/resolve', [RecurringIssueController::class, 'resolve'])->name('recurring-issues.resolve');
+    Route::post('recurring-issues/{recurringIssue}/occurrences', [RecurringIssueController::class, 'logOccurrence'])->name('recurring-issues.occurrences.store');
 
     // ── Admin: user management ────────────────────────────────────
     Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {

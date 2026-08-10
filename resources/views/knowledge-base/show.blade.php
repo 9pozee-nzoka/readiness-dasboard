@@ -9,7 +9,7 @@
         <span class="text-gray-900 font-medium truncate">{{ $review->event->name }}</span>
     </nav>
 
-    <div class="max-w-3xl">
+    <div class="max-w-3xl w-full">
         {{-- Header card --}}
         <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-6">
             <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 mb-3">

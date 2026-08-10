@@ -22,13 +22,12 @@
                 </form>
             </div>
 
-            {{-- Greeting --}}
-            <div class="mb-8">
-                <p class="text-indigo-300 text-sm font-medium tracking-wide uppercase mb-1">Director Overview</p>
-                <h1 class="text-3xl font-bold text-white">
+        <div class="mb-6 sm:mb-8">
+                <p class="text-indigo-300 text-xs sm:text-sm font-medium tracking-wide uppercase mb-1">Director Overview</p>
+                <h1 class="text-xl sm:text-3xl font-bold text-white leading-tight">
                     {{ $selectedWeek?->label ?? 'Event Readiness' }}
                 </h1>
-                <p class="text-slate-400 text-sm mt-1">
+                <p class="text-slate-400 text-xs sm:text-sm mt-1">
                     {{ now()->format('l, d F Y') }}
                     @if ($selectedWeek)
                         &nbsp;·&nbsp; {{ $selectedWeek->week_start->format('d M') }} – {{ $selectedWeek->week_end->format('d M Y') }}
@@ -37,7 +36,7 @@
             </div>
 
             {{-- KPI tiles --}}
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
                 @foreach ([
                     ['label' => 'Total Events',    'value' => $totalEvents,           'sub' => 'this week',          'accent' => 'text-indigo-300',  'bg' => 'bg-indigo-500/20'],
                     ['label' => 'Fully Ready',      'value' => $fullyReady,            'sub' => 'events at 100%',     'accent' => 'text-emerald-300', 'bg' => 'bg-emerald-500/20'],
@@ -291,7 +290,7 @@
             <p class="text-center text-gray-400 text-sm py-8">No department data for this week.</p>
         @else
             {{-- Cards grid --}}
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                 @foreach ($deptReadiness as $index => $dr)
                     @php
                         $dc     = $dr['classes'];

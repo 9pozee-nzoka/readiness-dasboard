@@ -1,7 +1,7 @@
 <x-layouts.admin>
     <x-slot:title>Planning Weeks</x-slot:title>
 
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-5">
         <div>
             <h2 class="text-lg font-semibold text-gray-900">Planning Weeks</h2>
             <p class="text-sm text-gray-500">Manage weekly schedules and import KSG programme calendars</p>
@@ -75,6 +75,7 @@
                     @endforeach
                 </tbody>
             </table>
+</div>
         </div>
     @endif
 </x-layouts.admin>

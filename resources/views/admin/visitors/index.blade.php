@@ -13,7 +13,7 @@
     </div>
 
     {{-- Summary cards --}}
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
         @foreach ([
             ['label' => 'Total Visits', 'value' => number_format($totalVisits)],
             ['label' => 'Unique IPs', 'value' => number_format($uniqueIps)],
@@ -27,7 +27,7 @@
         @endforeach
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
         {{-- Bar chart --}}
         <div class="lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm p-5">
@@ -77,7 +77,7 @@
                 <p class="text-sm text-gray-400 text-center py-10">No visits recorded yet</p>
             @else
                 <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
+                    <table class="w-full text-sm min-w-[700px]">
                         <thead>
                             <tr class="bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                                 <th class="px-5 py-3 text-left">Time</th>

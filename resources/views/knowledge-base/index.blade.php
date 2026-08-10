@@ -43,10 +43,49 @@
         @endif
     </form>
 
+    {{-- Recurring issues callout --}}
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-6 flex flex-col sm:flex-row sm:items-start gap-4">
+        <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="text-lg">🔁</span>
+                <h2 class="font-semibold text-gray-900 text-sm">Recurring Issues Tracker</h2>
+                @if ($criticalRecurring > 0)
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">
+                        {{ $criticalRecurring }} critical open
+                    </span>
+                @endif
+            </div>
+            @if ($openRecurring->isEmpty())
+                <p class="text-sm text-gray-400">No recurring issues tracked yet.</p>
+            @else
+                <div class="flex flex-wrap gap-2">
+                    @foreach ($openRecurring as $ri)
+                        @php $sc = $ri->severityClasses(); @endphp
+                        <a href="{{ route('recurring-issues.show', $ri) }}"
+                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border {{ $sc['bg'] }} {{ $sc['text'] }} {{ $sc['border'] }} hover:opacity-80 transition-opacity">
+                            <span class="w-1.5 h-1.5 rounded-full {{ $sc['dot'] }}"></span>
+                            {{ Str::limit($ri->title, 40) }}
+                            <span class="font-bold opacity-60">{{ $ri->occurrences_count }}×</span>
+                        </a>
+                    @endforeach
+                </div>
+            @endif
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+            <a href="{{ route('recurring-issues.index') }}"
+                class="text-sm text-indigo-600 hover:text-indigo-700 font-medium border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors">
+                View all ({{ $totalRecurring }})
+            </a>
+            <a href="{{ route('recurring-issues.create') }}"
+                class="text-sm text-white bg-indigo-600 hover:bg-indigo-700 font-medium px-3 py-1.5 rounded-lg transition-colors">
+                + Log Issue
+            </a>
+        </div>
+    </div>
+
     {{-- Results --}}
     @if ($reviews->isEmpty())
-        <div class="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-300">
-            <svg class="mx-auto w-12 h-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-300">            <svg class="mx-auto w-12 h-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                     d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
             </svg>

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\PostEventReview;
+use App\Models\RecurringIssue;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -29,12 +30,18 @@ class KnowledgeBaseController extends Controller
             ->paginate(12)
             ->withQueryString();
 
-        // Aggregate insights
         $totalReviews = PostEventReview::count();
         $recentReviews = PostEventReview::where('completed_at', '>=', now()->subMonths(3))->count();
 
+        // Recurring issue snapshot for the sidebar
+        $openRecurring = RecurringIssue::where('is_resolved', false)->withCount('occurrences')->orderByDesc('occurrences_count')->limit(5)->get();
+        $totalRecurring = RecurringIssue::count();
+        $criticalRecurring = RecurringIssue::where('severity', 'critical')->where('is_resolved', false)->count();
+
         return view('knowledge-base.index', compact(
-            'reviews', 'search', 'category', 'totalReviews', 'recentReviews'
+            'reviews', 'search', 'category',
+            'totalReviews', 'recentReviews',
+            'openRecurring', 'totalRecurring', 'criticalRecurring'
         ));
     }
 

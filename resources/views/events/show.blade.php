@@ -48,7 +48,7 @@
                 @endif
             </div>
 
-            <div class="flex flex-wrap items-center gap-2 shrink-0 print:hidden">
+            <div class="flex flex-wrap items-center gap-2 print:hidden">
                 <a href="{{ route('events.export', $event) }}"
                     class="inline-flex items-center gap-1.5 border border-gray-300 hover:border-gray-400 bg-white text-gray-700 text-sm font-medium px-3 py-2 rounded-lg transition-colors">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -114,7 +114,7 @@
     </div>
 
     {{-- Priority filter + Deliberations link --}}
-    <div class="flex flex-wrap items-center gap-2 mb-5 print:hidden">
+    <div class="flex flex-wrap items-center gap-2 mb-4 print:hidden">
         <span class="text-xs font-medium text-gray-500">Filter:</span>
         @foreach (['' => 'All', 'critical' => 'Critical', 'high' => 'High', 'medium' => 'Medium', 'low' => 'Low', 'pending' => 'Pending only'] as $val => $label)
             <a href="{{ route('events.show', array_merge(['event' => $event->id], $val ? ['priority' => $val] : [])) }}"
@@ -277,7 +277,7 @@
                                     </div>
 
                                     {{-- Actions: Assign + Escalate + Delete --}}
-                                    <div class="flex items-center gap-1.5 shrink-0 print:hidden">
+                                    <div class="flex flex-wrap items-center gap-1 shrink-0 print:hidden">
                                         {{-- Assign to staff --}}
                                         @if ($user->isAdmin() || ($user->isHod() && $user->department_id === $dr['department']->id))
                                             <form method="POST" action="{{ route('requirements.assign', $req) }}" class="inline">

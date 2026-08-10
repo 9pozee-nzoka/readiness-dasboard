@@ -306,7 +306,7 @@
                                                   class="space-y-3">
                                                 @csrf @method('PUT')
 
-                                                <div class="grid grid-cols-1 sm:grid-cols-[1fr_160px_160px] gap-3">
+                                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_160px_160px] gap-3">
                                                     {{-- Description --}}
                                                     <div>
                                                         <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">Description</label>

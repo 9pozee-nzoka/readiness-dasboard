@@ -17,7 +17,7 @@
     </nav>
 
     <div class="flex flex-col bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden"
-         style="height: calc(100vh - 200px); min-height: 500px;"
+         style="height: calc(100dvh - 160px); min-height: 400px;"
          x-data="chatRoom({{ $room->id }}, {{ auth()->id() }})"
          x-init="init()">
 

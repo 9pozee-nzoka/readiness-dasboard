@@ -21,7 +21,7 @@
     </div>
 
     {{-- Summary metric cards --}}
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
         <x-metric-card label="Total Events"    :value="$totalEvents"           icon="calendar"    color="indigo" />
         <x-metric-card label="Fully Ready"     :value="$fullyReady"            icon="check-circle" color="green" />
         <x-metric-card label="In Progress"     :value="$inProgress"            icon="clock"        color="amber" />

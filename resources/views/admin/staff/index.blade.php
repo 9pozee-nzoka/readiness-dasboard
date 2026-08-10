@@ -19,7 +19,7 @@
     {{-- ── Department KPI cards ─────────────────────────────────── --}}
     <div class="mb-8">
         <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Department KPI Summary</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             @foreach ($deptKpis as $dk)
                 @php $dc = \App\Models\Department::ragClasses($dk['rate']); @endphp
                 <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4">

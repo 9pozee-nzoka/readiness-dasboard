@@ -2,7 +2,7 @@
     <x-slot:title>User Management</x-slot:title>
 
     {{-- Header --}}
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-5">
         <div>
             <h1 class="text-2xl font-bold text-gray-900">User Management</h1>
             <p class="text-sm text-gray-500 mt-1">Approve registrations and assign roles</p>
@@ -26,7 +26,7 @@
     </div>
 
     {{-- Filter tabs --}}
-    <div class="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit mb-6">
+    <div class="flex flex-wrap gap-1 bg-gray-100 rounded-lg p-1 w-fit mb-6">
         @foreach (['all' => 'All Users', 'pending' => 'Pending', 'approved' => 'Approved'] as $value => $label)
             <a href="{{ route('admin.users.index', ['filter' => $value]) }}"
                 class="px-4 py-1.5 rounded-md text-sm font-medium transition-colors
@@ -49,7 +49,8 @@
                 <p class="text-sm font-medium">No users found</p>
             </div>
         @else
-            <table class="w-full text-sm">
+            <div class="overflow-x-auto">
+<table class="w-full text-sm min-w-[800px]">
                 <thead>
                     <tr class="border-b border-gray-100 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                         <th class="px-6 py-3 text-left">User</th>
@@ -180,6 +181,7 @@
                     @endforeach
                 </tbody>
             </table>
+</div>
 
             @if ($users->hasPages())
                 <div class="px-6 py-4 border-t border-gray-100">

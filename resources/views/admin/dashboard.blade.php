@@ -2,7 +2,7 @@
     <x-slot:title>Overview</x-slot:title>
 
     {{-- Stat cards --}}
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         @foreach ([
             ['label' => 'Total Staff', 'value' => $totalUsers, 'sub' => $pendingApprovals.' pending approval', 'color' => 'indigo'],
             ['label' => 'Total Events', 'value' => $totalEvents, 'sub' => count($upcomingEvents).' upcoming', 'color' => 'blue'],
@@ -27,7 +27,7 @@
         @endforeach
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
         {{-- Visitor chart --}}
         <div class="lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm p-5">

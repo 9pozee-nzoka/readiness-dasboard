@@ -92,7 +92,7 @@
                     @endif
                 </div>
             </div>
-            <div class="flex items-center gap-2 shrink-0">
+            <div class="flex flex-wrap items-center gap-2">
                 @if ($canManage && $deliberation->status->isOpen())
                     <a href="{{ route('deliberations.edit', [$event, $deliberation]) }}"
                         class="text-sm text-indigo-600 hover:text-indigo-700 font-medium">
