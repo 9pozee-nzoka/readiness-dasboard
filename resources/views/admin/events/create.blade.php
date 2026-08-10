@@ -20,7 +20,7 @@
                             class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 @error('planning_week_id') border-red-400 @enderror">
                             <option value="">Select a week…</option>
                             @foreach ($weeks as $week)
-                                <option value="{{ $week->id }}" @selected(old('planning_week_id') == $week->id)>
+                                <option value="{{ $week->id }}" @selected(old('planning_week_id', $selectedWeekId ?? null) == $week->id)>
                                     {{ $week->label }}{{ $week->is_current ? ' (Current)' : '' }}
                                 </option>
                             @endforeach
@@ -76,6 +76,8 @@
                             placeholder="e.g. Main Boardroom"
                             class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
                     </div>
+
+                    <x-schedule-fields :schedule-categories="$scheduleCategories" />
 
                     {{-- Description --}}
                     <div>

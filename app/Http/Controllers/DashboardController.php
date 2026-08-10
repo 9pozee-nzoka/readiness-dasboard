@@ -36,6 +36,16 @@ class DashboardController extends Controller
             ->orderBy('name')
             ->get();
 
+        // My assigned requirements (for employees/HODs)
+        $myRequirements = null;
+        if ($user->isDepartmentScoped()) {
+            $myRequirements = Requirement::with(['event', 'department'])
+                ->where('assigned_to', $user->id)
+                ->where('status', '!=', 'completed')
+                ->orderBy('deadline')
+                ->get();
+        }
+
         // Summary metrics
         $totalEvents = $events->count();
         $fullyReady = $events->filter(fn ($e) => $e->overallReadiness() === 100)->count();
@@ -49,7 +59,7 @@ class DashboardController extends Controller
         $criticalAlertsQuery = Requirement::with(['event', 'department'])
             ->whereIn('event_id', $events->pluck('id'))
             ->where('priority', Priority::Critical->value)
-            ->where('is_completed', false)
+            ->where('status', '!=', 'completed')
             ->orderBy('deadline')
             ->byPriority();
 
@@ -60,7 +70,7 @@ class DashboardController extends Controller
         $criticalAlerts = $criticalAlertsQuery->limit(10)->get();
 
         $overdueCount = Requirement::whereIn('event_id', $events->pluck('id'))
-            ->where('is_completed', false)
+            ->where('status', '!=', 'completed')
             ->whereNotNull('deadline')
             ->where('deadline', '<', now()->toDateString())
             ->when($user->isDepartmentScoped(), fn ($q) => $q->where('department_id', $user->department_id))
@@ -78,7 +88,7 @@ class DashboardController extends Controller
         return view('dashboard.index', compact(
             'weeks', 'selectedWeek', 'events', 'departments',
             'totalEvents', 'fullyReady', 'inProgress', 'notStarted', 'averageReadiness',
-            'criticalAlerts', 'overdueCount',
+            'criticalAlerts', 'overdueCount', 'myRequirements',
         ));
     }
 

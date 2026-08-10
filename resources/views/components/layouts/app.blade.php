@@ -24,6 +24,73 @@
                     <span class="font-semibold text-gray-900 text-lg hidden sm:block">Readiness Dashboard</span>
                 </a>
 
+                {{-- Centre nav links --}}
+                @auth
+                <div class="hidden sm:flex items-center gap-1" x-data="chatBadge()" x-init="init()">
+                    <a href="{{ route('dashboard.index') }}"
+                        class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
+                            {{ request()->routeIs('dashboard.index') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-100' }}">
+                        Dashboard
+                    </a>
+
+                    <a href="{{ route('knowledge-base.index') }}"
+                        class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
+                            {{ request()->routeIs('knowledge-base.*') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-100' }}">
+                        Knowledge Base
+                    </a>
+
+                    {{-- Chat with unread badge + notification popup --}}
+                    <div class="relative">
+                        <a href="{{ route('chat.index') }}"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
+                                {{ request()->routeIs('chat.*') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-100' }}">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                            </svg>
+                            Chat
+                            <span x-show="total > 0"
+                                class="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold leading-none"
+                                x-text="total > 99 ? '99+' : total"></span>
+                        </a>
+
+                        {{-- Notification toast popup --}}
+                        <div x-show="toast" x-cloak
+                             x-transition:enter="transition ease-out duration-200"
+                             x-transition:enter-start="opacity-0 translate-y-1"
+                             x-transition:enter-end="opacity-100 translate-y-0"
+                             x-transition:leave="transition ease-in duration-150"
+                             x-transition:leave-start="opacity-100"
+                             x-transition:leave-end="opacity-0"
+                             class="absolute left-0 top-full mt-2 w-72 bg-white rounded-xl border border-gray-200 shadow-xl z-50 overflow-hidden">
+                            <div class="flex items-center justify-between px-4 py-2.5 bg-indigo-600">
+                                <span class="text-xs font-semibold text-white">New messages</span>
+                                <button @click="toast = false" class="text-indigo-200 hover:text-white">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <ul class="divide-y divide-gray-50 max-h-60 overflow-y-auto">
+                                <template x-for="room in unreadRooms" :key="room.id">
+                                    <a :href="room.url"
+                                       class="flex items-center justify-between px-4 py-2.5 hover:bg-indigo-50 transition-colors group">
+                                        <span class="text-sm text-gray-800 group-hover:text-indigo-700 truncate" x-text="room.name"></span>
+                                        <span class="ml-2 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-100 text-red-700 text-[11px] font-bold shrink-0"
+                                              x-text="room.count"></span>
+                                    </a>
+                                </template>
+                            </ul>
+                            <div class="px-4 py-2 border-t border-gray-100 text-center">
+                                <a href="{{ route('chat.index') }}" class="text-xs text-indigo-600 hover:text-indigo-700 font-medium">
+                                    View all chat rooms →
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @endauth
+
                 {{-- Right side --}}
                 <div class="flex items-center gap-3">
 
@@ -54,6 +121,21 @@
                                 @endif
                             </a>
                         @endif
+
+                        {{-- Notifications --}}
+                        @php $unreadNotifs = auth()->user()->unreadNotifications()->count(); @endphp
+                        <a href="{{ route('notifications.index') }}"
+                            class="relative inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-gray-100 transition-colors text-gray-600">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                            </svg>
+                            @if ($unreadNotifs > 0)
+                                <span class="absolute top-0.5 right-0.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-red-500 text-white text-[10px] font-bold">
+                                    {{ $unreadNotifs > 9 ? '9+' : $unreadNotifs }}
+                                </span>
+                            @endif
+                        </a>
 
                         {{-- User menu --}}
                         <div class="relative" x-data="{ open: false }">
@@ -165,5 +247,62 @@
 
     {{-- Alpine.js for dropdown --}}
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    @auth
+    <style>[x-cloak]{display:none!important}</style>
+    <script>
+    function chatBadge() {
+        return {
+            total: 0,
+            unreadRooms: [],
+            toast: false,
+            prevTotal: 0,
+            interval: null,
+
+            init() {
+                this.fetch();
+                // Poll every 15 seconds when not on a chat page
+                this.interval = setInterval(() => this.fetch(), 15000);
+            },
+
+            async fetch() {
+                try {
+                    const res = await fetch('/chat/unread', { headers: { Accept: 'application/json' } });
+                    if (!res.ok) return;
+                    const data = await res.json();
+                    const newTotal = data.total ?? 0;
+
+                    // Show toast only when count increases
+                    if (newTotal > this.prevTotal && !window.location.pathname.startsWith('/chat/')) {
+                        this.toast = true;
+                        setTimeout(() => { this.toast = false; }, 6000);
+                    }
+
+                    this.total       = newTotal;
+                    this.prevTotal   = newTotal;
+                    this.unreadRooms = data.rooms ?? [];
+                } catch (e) { /* silent */ }
+            },
+        };
+    }
+
+    // Subscribe to all accessible chat rooms via Echo for real-time badge updates
+    document.addEventListener('DOMContentLoaded', () => {
+        if (typeof window.Echo === 'undefined') return;
+        @foreach(\App\Models\ChatRoom::where('is_active', true)->get()->filter(fn($r) => $r->canAccess(auth()->user())) as $navRoom)
+        window.Echo.private('chat-room.{{ $navRoom->id }}')
+            .listen('.message.sent', () => {
+                // Let the poll interval pick it up, or trigger immediately
+                document.dispatchEvent(new CustomEvent('chat-new-message'));
+            });
+        @endforeach
+
+        document.addEventListener('chat-new-message', () => {
+            const badge = document.querySelector('[x-data="chatBadge()"]');
+            if (badge && badge.__x) badge.__x.$data.fetch();
+        });
+    });
+    </script>
+    @endauth
 </body>
 </html>

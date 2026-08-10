@@ -178,6 +178,8 @@
                             $weighted = $event->weightedReadiness();
                             $dc       = \App\Models\Department::ragClasses($overall);
                             $cp       = $event->criticalPendingCount();
+                            $rs       = $event->riskScore();
+                            $rl       = $event->riskLevelClasses();
                         @endphp
                         <a href="{{ route('events.show', $event) }}"
                             class="group flex items-center gap-4 p-4 rounded-xl border {{ $event->isAtRisk() ? 'border-red-200 bg-red-50/40' : 'border-gray-100 hover:border-indigo-200 hover:bg-indigo-50/30' }} transition-all">
@@ -204,6 +206,11 @@
                                     @if ($cp > 0)
                                         <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-50 text-red-600 border border-red-200">
                                             {{ $cp }} critical
+                                        </span>
+                                    @endif
+                                    @if ($rs > 0)
+                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold border {{ $rl['bg'] }} {{ $rl['text'] }} {{ $rl['border'] }}">
+                                            Risk {{ $rs }}
                                         </span>
                                     @endif
                                 </div>

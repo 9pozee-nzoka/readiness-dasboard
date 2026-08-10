@@ -56,6 +56,20 @@
                     </svg>
                     Export CSV
                 </a>
+                <a href="{{ route('reports.event', $event) }}" target="_blank"
+                    class="inline-flex items-center gap-1.5 border border-gray-300 hover:border-indigo-400 bg-white text-gray-700 text-sm font-medium px-3 py-2 rounded-lg transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    PDF Report
+                </a>
+                <a href="{{ route('events.print', $event) }}"
+                    class="inline-flex items-center gap-1.5 border border-gray-300 hover:border-gray-400 bg-white text-gray-700 text-sm font-medium px-3 py-2 rounded-lg transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Print Report
+                </a>
                 <button onclick="window.print()"
                     class="inline-flex items-center gap-1.5 border border-gray-300 hover:border-gray-400 bg-white text-gray-700 text-sm font-medium px-3 py-2 rounded-lg transition-colors">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -99,7 +113,7 @@
         </div>
     </div>
 
-    {{-- Priority filter --}}
+    {{-- Priority filter + Deliberations link --}}
     <div class="flex flex-wrap items-center gap-2 mb-5 print:hidden">
         <span class="text-xs font-medium text-gray-500">Filter:</span>
         @foreach (['' => 'All', 'critical' => 'Critical', 'high' => 'High', 'medium' => 'Medium', 'low' => 'Low', 'pending' => 'Pending only'] as $val => $label)
@@ -111,6 +125,13 @@
                 {{ $label }}
             </a>
         @endforeach
+        <a href="{{ route('deliberations.index', $event) }}"
+            class="ml-auto inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium bg-purple-50 border border-purple-200 text-purple-700 hover:bg-purple-100 transition-colors">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
+            </svg>
+            Deliberations ({{ $event->deliberations->count() }})
+        </a>
     </div>
 
     {{-- Department cards --}}
@@ -193,75 +214,121 @@
                                 @endphp
                                 <li class="px-6 py-3 flex items-start gap-3 {{ $isOverdue ? 'bg-red-50/40' : '' }}" id="req-{{ $req->id }}">
 
-                                    {{-- Checkbox --}}
+                                    {{-- Status dropdown --}}
                                     @if ($user->isAdmin() || ($user->isDepartmentScoped() && $user->department_id === $dr['department']->id))
-                                        <button type="button"
-                                            onclick="toggleRequirement({{ $req->id }}, {{ $dr['department']->id }})"
-                                            class="mt-0.5 shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors
-                                                {{ $req->is_completed ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300 hover:border-indigo-400 bg-white' }}"
-                                            aria-label="{{ $req->is_completed ? 'Mark as pending' : 'Mark as completed' }}"
-                                            id="check-{{ $req->id }}">
-                                            @if ($req->is_completed)
-                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
-                                                </svg>
-                                            @endif
-                                        </button>
-                                    @else
-                                        <div class="mt-0.5 shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center
-                                            {{ $req->is_completed ? 'bg-green-500 border-green-500 text-white' : 'border-gray-200 bg-gray-50' }}">
-                                            @if ($req->is_completed)
-                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
-                                                </svg>
-                                            @endif
+                                        <div class="shrink-0 mt-0.5">
+                                            <select
+                                                onchange="updateRequirementStatus({{ $req->id }}, {{ $dr['department']->id }}, this.value)"
+                                                class="text-xs border rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-500
+                                                    {{ $req->status->classes()['bg'] }} {{ $req->status->classes()['text'] }} {{ $req->status->classes()['border'] }}"
+                                                id="status-select-{{ $req->id }}">
+                                                @foreach (\App\Enums\RequirementStatus::cases() as $status)
+                                                    <option value="{{ $status->value }}" @selected($req->status->value === $status->value)>
+                                                        {{ $status->label() }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
                                         </div>
+                                    @else
+                                        <span class="mt-0.5 shrink-0 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+                                            {{ $req->status->classes()['bg'] }} {{ $req->status->classes()['text'] }} {{ $req->status->classes()['border'] }}"
+                                            id="status-badge-{{ $req->id }}">
+                                            {{ $req->status->label() }}
+                                        </span>
                                     @endif
 
                                     <div class="flex-1 min-w-0">
                                         <div class="flex items-start gap-2 flex-wrap">
-                                            <p class="text-sm text-gray-800 req-desc-{{ $req->id }} {{ $req->is_completed ? 'line-through text-gray-400' : '' }}">
+                                            <p class="text-sm text-gray-800 req-desc-{{ $req->id }} {{ $req->status->isCompleted() ? 'line-through text-gray-400' : '' }}"
+                                               id="desc-{{ $req->id }}">
                                                 {{ $req->description }}
                                             </p>
                                             {{-- Priority badge --}}
                                             <x-priority-badge :priority="$req->priority" />
-                                            {{-- Escalated badge --}}
-                                            @if ($req->is_escalated)
-                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-purple-100 text-purple-700 border border-purple-200">
-                                                    ↑ Escalated
-                                                </span>
+                                            {{-- Deliberation badge --}}
+                                            @if ($req->requires_deliberation)
+                                                <a href="{{ route('deliberations.index', $event) }}" class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-purple-100 text-purple-700 border border-purple-200 hover:bg-purple-200">
+                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                                                    Deliberation
+                                                </a>
                                             @endif
                                         </div>
                                         <div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5">
-                                            @if ($req->responsible_officer)
+                                            @if ($req->assignedTo)
+                                                <span class="text-xs text-indigo-600 font-medium">
+                                                    <svg class="w-3 h-3 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                                    {{ $req->assignedTo->name }}
+                                                </span>
+                                            @elseif ($req->responsible_officer)
                                                 <span class="text-xs text-gray-400">{{ $req->responsible_officer }}</span>
                                             @endif
                                             @if ($req->deadline)
-                                                <span class="text-xs {{ $isOverdue ? 'text-red-600 font-semibold' : 'text-gray-400' }}">
+                                                <span class="text-xs {{ $isOverdue ? 'text-red-600 font-semibold' : 'text-gray-400' }}"
+                                                      id="deadline-{{ $req->id }}">
                                                     Due {{ $req->deadline->format('d M Y') }}{{ $isOverdue ? ' — OVERDUE' : '' }}
                                                 </span>
                                             @endif
                                             @if ($req->completed_at)
-                                                <span class="text-xs text-green-500 req-time-{{ $req->id }}">
+                                                <span class="text-xs text-green-500 req-time-{{ $req->id }}" id="time-{{ $req->id }}">
                                                     ✓ {{ $req->completed_at->format('d M Y H:i') }}
                                                 </span>
                                             @endif
                                         </div>
                                     </div>
 
-                                    {{-- Admin actions --}}
-                                    @if ($user->canManageEvents())
-                                        <div class="flex items-center gap-1.5 shrink-0 print:hidden">
-                                            {{-- Escalate --}}
-                                            @if (!$req->is_completed && !$req->is_escalated && in_array($req->priority->value, ['critical', 'high']))
-                                                <form method="POST" action="{{ route('requirements.escalate', $req) }}">
-                                                    @csrf @method('PATCH')
-                                                    <button type="submit"
-                                                        class="text-xs text-purple-600 hover:text-purple-800 font-medium"
-                                                        title="Escalate this requirement">↑</button>
-                                                </form>
-                                            @endif
-                                            {{-- Delete --}}
+                                    {{-- Actions: Assign + Escalate + Delete --}}
+                                    <div class="flex items-center gap-1.5 shrink-0 print:hidden">
+                                        {{-- Assign to staff --}}
+                                        @if ($user->isAdmin() || ($user->isHod() && $user->department_id === $dr['department']->id))
+                                            <form method="POST" action="{{ route('requirements.assign', $req) }}" class="inline">
+                                                @csrf @method('PATCH')
+                                                <select name="assigned_to" onchange="this.form.submit()"
+                                                    class="text-xs border border-gray-300 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                    title="Assign to staff">
+                                                    <option value="">Assign…</option>
+                                                    @php
+                                                        $deptStaff = \App\Models\User::where('department_id', $dr['department']->id)
+                                                            ->whereIn('role', ['hod', 'employee'])
+                                                            ->where('is_approved', true)
+                                                            ->orderBy('name')
+                                                            ->get();
+                                                    @endphp
+                                                    @foreach ($deptStaff as $staff)
+                                                        <option value="{{ $staff->id }}" @selected($req->assigned_to === $staff->id)>{{ $staff->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </form>
+                                        @endif
+                                        {{-- Escalate --}}
+                                        @if (!$req->status->isCompleted() && !$req->status->isEscalated() && in_array($req->priority->value, ['critical', 'high']))
+                                            <form method="POST" action="{{ route('requirements.escalate', $req) }}">
+                                                @csrf @method('PATCH')
+                                                <button type="submit"
+                                                    class="text-xs text-purple-600 hover:text-purple-800 font-medium"
+                                                    title="Escalate this requirement">↑</button>
+                                            </form>
+                                        @endif
+                                        {{-- Deliberate (HOD/Admin) --}}
+                                        @if ($user->isAdmin() || ($user->isHod() && $user->department_id === $dr['department']->id))
+                                            <a href="{{ route('deliberations.create', ['event' => $event, 'requirement_id' => $req->id]) }}"
+                                                class="inline-flex items-center gap-1 text-xs font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 px-2 py-1 rounded-lg transition-colors"
+                                                title="Start a deliberation for this requirement">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"/></svg>
+                                                Deliberate
+                                            </a>
+                                        @endif
+
+                                        {{-- Ask HOD (Employee) --}}
+                                        @if ($user->isEmployee() && $user->department_id === $dr['department']->id)
+                                            <a href="{{ route('deliberations.create', ['event' => $event, 'requirement_id' => $req->id, 'consult' => 1]) }}"
+                                                class="inline-flex items-center gap-1 text-xs font-medium text-sky-700 bg-sky-50 hover:bg-sky-100 border border-sky-200 px-2 py-1 rounded-lg transition-colors"
+                                                title="Ask your HOD for direction on this requirement">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                Ask HOD
+                                            </a>
+                                        @endif
+                                        {{-- Delete --}}
+                                        @if ($user->canManageEvents())
                                             <form method="POST" action="{{ route('requirements.destroy', $req) }}"
                                                 onsubmit="return confirm('Remove this requirement?')">
                                                 @csrf @method('DELETE')
@@ -271,8 +338,8 @@
                                                     </svg>
                                                 </button>
                                             </form>
-                                        </div>
-                                    @endif
+                                        @endif
+                                    </div>
                                 </li>
                             @endforeach
                         </ul>
@@ -326,48 +393,48 @@
     <script>
         const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 
-        async function toggleRequirement(reqId, deptId) {
-            const btn = document.getElementById(`check-${reqId}`);
-            if (!btn) return;
-            btn.disabled = true;
+        async function updateRequirementStatus(reqId, deptId, newStatus) {
+            const select = document.getElementById(`status-select-${reqId}`);
+            if (!select) return;
+            select.disabled = true;
 
             try {
-                const res = await fetch(`/requirements/${reqId}/toggle`, {
+                const res = await fetch(`/requirements/${reqId}/status`, {
                     method: 'PATCH',
-                    headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ status: newStatus }),
                 });
                 if (!res.ok) throw new Error('Request failed');
                 const data = await res.json();
 
-                // Update checkbox
-                if (data.is_completed) {
-                    btn.classList.add('bg-green-500', 'border-green-500', 'text-white');
-                    btn.classList.remove('border-gray-300', 'hover:border-indigo-400', 'bg-white');
-                    btn.innerHTML = `<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>`;
-                    btn.setAttribute('aria-label', 'Mark as pending');
-                } else {
-                    btn.classList.remove('bg-green-500', 'border-green-500', 'text-white');
-                    btn.classList.add('border-gray-300', 'hover:border-indigo-400', 'bg-white');
-                    btn.innerHTML = '';
-                    btn.setAttribute('aria-label', 'Mark as completed');
-                }
+                // Update select styling
+                const classes = data.status_classes;
+                select.className = `text-xs border rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-500 ${classes.bg} ${classes.text} ${classes.border}`;
 
-                // Strikethrough
-                const desc = document.querySelector(`.req-desc-${reqId}`);
+                // Update description strikethrough
+                const desc = document.getElementById(`desc-${reqId}`);
                 if (desc) {
                     desc.classList.toggle('line-through', data.is_completed);
                     desc.classList.toggle('text-gray-400', data.is_completed);
                 }
 
-                // Timestamp
-                const timeEl = document.querySelector(`.req-time-${reqId}`);
+                // Update timestamp
+                const timeEl = document.getElementById(`time-${reqId}`);
                 if (data.is_completed && data.completed_at) {
                     if (timeEl) { timeEl.textContent = `✓ ${data.completed_at}`; }
-                    else if (desc?.parentElement) {
-                        const span = document.createElement('span');
-                        span.className = `text-xs text-green-500 req-time-${reqId}`;
-                        span.textContent = `✓ ${data.completed_at}`;
-                        desc.parentElement.appendChild(span);
+                    else {
+                        const infoRow = desc?.closest('li')?.querySelector('.flex.flex-wrap');
+                        if (infoRow) {
+                            const span = document.createElement('span');
+                            span.className = `text-xs text-green-500 req-time-${reqId}`;
+                            span.id = `time-${reqId}`;
+                            span.textContent = `✓ ${data.completed_at}`;
+                            infoRow.appendChild(span);
+                        }
                     }
                 } else if (timeEl) { timeEl.remove(); }
 
@@ -376,7 +443,7 @@
                 updateOverallBar(data.overall_percentage, data.overall_status, data.overall_weighted);
 
             } catch (e) { console.error(e); }
-            finally { btn.disabled = false; }
+            finally { select.disabled = false; }
         }
 
         function updateDeptBar(deptId, pct, status, weighted) {

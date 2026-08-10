@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weekly Event Readiness Dashboard - Technical Documentation</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.7;color:#1e293b;background:#fff;display:flex;min-height:100vh}
+#sidebar{width:272px;min-width:272px;background:#1e293b;color:#cbd5e1;position:fixed;top:0;left:0;bottom:0;overflow-y:auto;padding:0 0 40px;z-index:100;font-size:13px}
+.sb-brand{padding:20px 20px 16px;border-bottom:1px solid #334155;margin-bottom:8px}
+.sb-brand h2{font-size:12px;font-weight:700;color:#f1f5f9;text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px}
+.sb-brand p{font-size:11px;color:#64748b}
+.sb-sec{padding:12px 20px 3px;font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.1em}
+#sidebar a{display:block;padding:5px 20px 5px 22px;color:#94a3b8;text-decoration:none;border-left:3px solid transparent;line-height:1.4;transition:background .12s,color .12s}
+#sidebar a:hover{background:#273549;color:#e2e8f0;border-left-color:#3b82f6}
+#sidebar a.l2{padding-left:34px;font-size:12px}
+#sidebar a.l3{padding-left:46px;font-size:11px;color:#64748b}
+#sidebar a.l3:hover{color:#94a3b8}
+#main{margin-left:272px;flex:1;max-width:940px;padding:48px 52px}
+.cover{text-align:center;padding:72px 32px 56px;border-bottom:3px solid #e2e8f0;margin-bottom:56px;page-break-after:always}
+.cover-badge{display:inline-block;background:#dbeafe;color:#1d4ed8;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:4px 14px;border-radius:999px;margin-bottom:20px}
+.cover h1{font-size:34px;font-weight:800;color:#0f172a;line-height:1.2;margin-bottom:14px}
+.cover-sub{font-size:17px;color:#475569;margin-bottom:36px}
+.cover-meta{display:flex;justify-content:center;gap:36px;flex-wrap:wrap;margin-bottom:28px}
+.cm-item{text-align:center}
+.cm-item .lbl{font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em}
+.cm-item .val{font-size:14px;font-weight:600;color:#334155;margin-top:2px}
+.pills{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:20px}
+.pill{background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;padding:4px 12px;font-size:12px;font-weight:500;color:#475569}
+.repo-link{margin-top:24px;font-size:13px;color:#94a3b8}
+.repo-link a{color:#64748b}
+h1,h2,h3,h4{color:#0f172a;font-weight:700;line-height:1.3}
+h1{font-size:28px;margin-bottom:18px;padding-bottom:10px;border-bottom:2px solid #e2e8f0}
+h2{font-size:21px;margin:40px 0 14px;padding-bottom:7px;border-bottom:1px solid #e2e8f0}
+h3{font-size:16px;margin:26px 0 10px;color:#1e3a5f}
+h4{font-size:14px;margin:18px 0 7px;color:#374151}
+p{margin-bottom:13px}
+ul,ol{margin:0 0 13px 22px}
+li{margin-bottom:4px}
+strong{font-weight:600;color:#0f172a}
+a{color:#2563eb;text-decoration:none}
+a:hover{text-decoration:underline}
+section{margin-bottom:44px}
+.sa{display:block;padding-top:72px;margin-top:-52px}
+pre{background:#0f172a;color:#e2e8f0;border-radius:8px;padding:18px 22px;overflow-x:auto;font-family:'Cascadia Code','Fira Code','JetBrains Mono',Consolas,Monaco,monospace;font-size:12.5px;line-height:1.65;margin:14px 0 22px;border:1px solid #1e293b;page-break-inside:avoid}
+code{font-family:'Cascadia Code','Fira Code',Consolas,Monaco,monospace;font-size:12px;background:#f1f5f9;color:#be185d;border-radius:4px;padding:1px 6px}
+pre code{background:none;color:inherit;padding:0;font-size:inherit}
+.kw{color:#c792ea}.fn{color:#82aaff}.st{color:#c3e88d}.cm{color:#546e7a;font-style:italic}.nm{color:#f78c6c}.ty{color:#ffcb6b}.op{color:#89ddff}.sh{color:#a6e22e}
+.tw{overflow-x:auto;margin:14px 0 24px;border-radius:8px;border:1px solid #e2e8f0}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{background:#f8fafc;color:#374151;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.06em;padding:9px 13px;border-bottom:2px solid #e2e8f0;text-align:left;white-space:nowrap}
+tbody tr:nth-child(even){background:#f8fafc}
+tbody tr:hover{background:#eff6ff}
+tbody td{padding:8px 13px;border-bottom:1px solid #f1f5f9;vertical-align:top}
+tbody tr:last-child td{border-bottom:none}
+.ib{border-radius:8px;padding:15px 18px;margin:14px 0 22px;border-left:4px solid;page-break-inside:avoid}
+.ib.note{background:#eff6ff;border-color:#3b82f6}
+.ib.warn{background:#fffbeb;border-color:#f59e0b}
+.ib.tip{background:#f0fdf4;border-color:#22c55e}
+.ib p{margin-bottom:0;font-size:13.5px}
+.ib strong{display:block;margin-bottom:4px}
+.badge{display:inline-block;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.br{background:#fee2e2;color:#b91c1c}
+.bo{background:#ffedd5;color:#c2410c}
+.ba{background:#fef3c7;color:#92400e}
+.bg2{background:#f3f4f6;color:#6b7280}
+.bgreen{background:#dcfce7;color:#15803d}
+.bblue{background:#dbeafe;color:#1d4ed8}
+.bpurple{background:#f3e8ff;color:#7e22ce}
+.rag-grid{display:flex;gap:10px;margin:14px 0 22px;flex-wrap:wrap}
+.rag{flex:1;min-width:130px;border-radius:8px;padding:12px 16px;text-align:center;border:1px solid transparent}
+.rg{background:#dcfce7;border-color:#bbf7d0}
+.ra{background:#fef3c7;border-color:#fde68a}
+.rr{background:#fee2e2;border-color:#fecaca}
+.rdot{width:18px;height:18px;border-radius:50%;margin:0 auto 6px}
+.rg .rdot{background:#22c55e}.ra .rdot{background:#f59e0b}.rr .rdot{background:#ef4444}
+.rlabel{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.rdesc{font-size:12px;margin-top:3px;color:#475569}
+.formula{background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:18px 22px;font-family:Consolas,Monaco,monospace;font-size:13px;color:#0369a1;margin:14px 0 22px;text-align:center}
+.pgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0 22px}
+.pc{border:1px solid #e2e8f0;border-radius:8px;padding:14px}
+.pc h4{margin-top:0;font-size:13px}
+.pc ul{margin:7px 0 0 15px;font-size:12px;color:#475569}
+.pc ul li{margin-bottom:3px}
+.pc.adm{border-top:3px solid #6366f1}.pc.dir{border-top:3px solid #8b5cf6}.pc.hod{border-top:3px solid #0ea5e9}.pc.emp{border-top:3px solid #22c55e}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:14px 0}
+.stat-row{display:flex;gap:12px;flex-wrap:wrap;margin:14px 0 22px}
+.stat{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px 18px;flex:1;min-width:120px;text-align:center}
+.stat .snum{font-size:24px;font-weight:800;color:#1e293b}
+.stat .slbl{font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+@media print{
+  #sidebar{display:none!important}
+  #main{margin-left:0;max-width:100%;padding:20px 28px}
+  .cover{page-break-after:always}
+  h1,h2{page-break-after:avoid}
+  pre,table,.ib{page-break-inside:avoid}
+  a{color:#1e293b;text-decoration:none}
+  body{font-size:12px}
+}
+@page{margin:2cm 1.5cm}
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sb-brand">
+    <h2>Technical Docs</h2>
+    <p>Readiness Dashboard v1.0</p>
+  </div>
+  <div class="sb-sec">Overview</div>
+  <a href="#cover">Cover Page</a>
+  <a href="#s1">1. Project Overview</a>
+  <a href="#s2">2. Architecture</a>
+  <div class="sb-sec">Data Layer</div>
+  <a href="#s3">3. Database Schema</a>
+  <a class="l2" href="#s3-1">3.1 Core Tables</a>
+  <a class="l2" href="#s3-2">3.2 Requirements &amp; Templates</a>
+  <a class="l2" href="#s3-3">3.3 Deliberations</a>
+  <a class="l2" href="#s3-4">3.4 Chat System</a>
+  <a class="l2" href="#s3-5">3.5 Supporting Tables</a>
+  <div class="sb-sec">Access Control</div>
+  <a href="#s4">4. Roles &amp; Permissions</a>
+  <div class="sb-sec">Feature Modules</div>
+  <a href="#s5">5. Feature Modules</a>
+  <a class="l2" href="#s5-1">5.1 Dashboard</a>
+  <a class="l2" href="#s5-2">5.2 Event Management</a>
+  <a class="l2" href="#s5-3">5.3 Requirement Management</a>
+  <a class="l2" href="#s5-4">5.4 Priority System</a>
+  <a class="l2" href="#s5-5">5.5 Deliberations</a>
+  <a class="l2" href="#s5-6">5.6 Real-time Chat</a>
+  <a class="l2" href="#s5-7">5.7 Admin Panel</a>
+  <a class="l2" href="#s5-8">5.8 Notifications</a>
+  <a class="l2" href="#s5-9">5.9 Audit &amp; Reporting</a>
+  <div class="sb-sec">API &amp; Routes</div>
+  <a href="#s6">6. Routes Reference</a>
+  <a class="l2" href="#s6-1">6.1 Auth Routes</a>
+  <a class="l2" href="#s6-2">6.2 Application Routes</a>
+  <a class="l2" href="#s6-3">6.3 Admin Routes</a>
+  <div class="sb-sec">Deployment</div>
+  <a href="#s7">7. Deployment</a>
+  <a class="l2" href="#s7-1">7.1 Docker Setup</a>
+  <a class="l2" href="#s7-2">7.2 Environment Variables</a>
+  <a class="l2" href="#s7-3">7.3 Laravel Reverb</a>
+  <div class="sb-sec">Security &amp; Setup</div>
+  <a href="#s8">8. Security</a>
+  <a href="#s9">9. Local Development</a>
+  <a href="#s10">10. Enums Reference</a>
+</nav>
+
+<main id="main">
+
+<!-- COVER -->
+<div class="cover" id="cover">
+  <div class="cover-badge">Technical Documentation</div>
+  <h1>Weekly Event Readiness<br>Dashboard</h1>
+  <p class="cover-sub">System Architecture &bull; Database Design &bull; Feature Modules &bull; Deployment Guide</p>
+  <div class="cover-meta">
+    <div class="cm-item"><div class="lbl">Version</div><div class="val">1.0.0</div></div>
+    <div class="cm-item"><div class="lbl">Date</div><div class="val">August 2026</div></div>
+    <div class="cm-item"><div class="lbl">Status</div><div class="val">Production</div></div>
+    <div class="cm-item"><div class="lbl">Routes</div><div class="val">83 endpoints</div></div>
+    <div class="cm-item"><div class="lbl">DB Tables</div><div class="val">38 tables</div></div>
+  </div>
+  <div class="pills">
+    <span class="pill">PHP 8.4</span>
+    <span class="pill">Laravel 13.8</span>
+    <span class="pill">MariaDB 11.8</span>
+    <span class="pill">Tailwind CSS v4</span>
+    <span class="pill">Alpine.js 3</span>
+    <span class="pill">Laravel Reverb</span>
+    <span class="pill">Vite 8</span>
+    <span class="pill">Docker</span>
+    <span class="pill">Render.com</span>
+  </div>
+  <p class="repo-link">Repository: <a href="https://github.com/9pozee-nzoka/readiness-dasboard">github.com/9pozee-nzoka/readiness-dasboard</a></p>
+</div>
+
+<!-- ===== SECTION 1: PROJECT OVERVIEW ===== -->
+<section>
+  <span class="sa" id="s1"></span>
+  <h1>1. Project Overview</h1>
+
+  <p>The <strong>Weekly Event Readiness Dashboard</strong> is a purpose-built web application designed to help organisations track and manage departmental readiness ahead of weekly events. Instead of relying on fragmented email chains, spreadsheets, or ad-hoc meetings, every department's preparation status is visible in real time on a single, role-aware dashboard. Coordinators, heads of department, and executives all see the information most relevant to them, at the level of detail they need.</p>
+
+  <p>The core problem the system solves is <em>accountability</em>. Each department is assigned a set of requirements for every upcoming event. Those requirements have priorities, deadlines, and responsible officers. The dashboard aggregates completion state into RAG (Red/Amber/Green) indicators and weighted readiness percentages, so decision-makers can identify at-risk events before they become crises rather than after.</p>
+
+  <h2>Technology Stack</h2>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Layer</th><th>Technology</th><th>Version</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td>Language</td><td>PHP</td><td>8.4</td><td>Server-side runtime; uses constructor property promotion, readonly properties, enums</td></tr>
+        <tr><td>Framework</td><td>Laravel</td><td>13.8</td><td>MVC framework, routing, Eloquent ORM, Blade templating, broadcasting</td></tr>
+        <tr><td>Database</td><td>MySQL / MariaDB</td><td>11.8</td><td>Relational data store; 38 tables with foreign key constraints and composite indexes</td></tr>
+        <tr><td>CSS Framework</td><td>Tailwind CSS</td><td>v4</td><td>Utility-first styling; integrated via @tailwindcss/vite plugin (no config file needed)</td></tr>
+        <tr><td>Frontend JS</td><td>Alpine.js</td><td>3.x</td><td>Lightweight reactivity for dropdowns, modals, real-time chat UI, charts</td></tr>
+        <tr><td>WebSockets</td><td>Laravel Reverb</td><td>v1</td><td>First-party WebSocket server using Pusher protocol for real-time chat</td></tr>
+        <tr><td>Build Tool</td><td>Vite</td><td>8.x</td><td>Asset bundling; bundles CSS, JS, and serves HMR in development</td></tr>
+        <tr><td>Font</td><td>Instrument Sans (Bunny)</td><td>—</td><td>Loaded via laravel-vite-plugin bunny() helper; weights 400/500/600</td></tr>
+        <tr><td>Containerisation</td><td>Docker</td><td>—</td><td>Single container with PHP-FPM + Nginx on Alpine Linux</td></tr>
+        <tr><td>Hosting</td><td>Render.com</td><td>—</td><td>Cloud platform; environment variables injected at container start</td></tr>
+        <tr><td>Queue/Cache/Session</td><td>Database driver</td><td>—</td><td>All three use the database connection; no Redis dependency</td></tr>
+        <tr><td>Test Framework</td><td>Pest</td><td>v4</td><td>PHP testing framework built on PHPUnit v12</td></tr>
+        <tr><td>Code Style</td><td>Laravel Pint</td><td>v1</td><td>Opinionated PHP code formatter</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Key Design Decisions</h2>
+  <ul>
+    <li><strong>No SPA framework:</strong> The UI is rendered server-side with Blade templates. Alpine.js handles interactive components (dropdowns, AJAX toggling, chat). This keeps the stack simple and avoids a build-time API layer.</li>
+    <li><strong>Database queues and sessions:</strong> Rather than requiring Redis, the application stores queued jobs, cached data, and session payloads in the database. This simplifies deployment on shared hosting and Render's free tier.</li>
+    <li><strong>Role-based access via middleware:</strong> A custom <code>RoleMiddleware</code> class checks <code>UserRole</code> enum values against the authenticated user's role. Admin-only routes are grouped under a separate <code>/admin</code> prefix with the <code>role:admin</code> middleware applied at the group level.</li>
+    <li><strong>Weighted readiness scoring:</strong> Simple completion percentage (tasks done / total tasks) is complemented by a weighted score that multiplies each requirement's completion state by its priority weight. This prevents a department from appearing "ready" when only low-priority tasks are done while critical ones remain open.</li>
+    <li><strong>Laravel Reverb for real-time chat:</strong> The first-party WebSocket server is embedded in the same container as the web application, eliminating the need for a separate Pusher subscription in production.</li>
+  </ul>
+</section>
+
+<!-- ===== SECTION 2: ARCHITECTURE ===== -->
+<section>
+  <span class="sa" id="s2"></span>
+  <h1>2. Architecture Overview</h1>
+
+  <p>The application follows a classic server-rendered MVC architecture with targeted real-time enhancements. There is no client-side routing or state management library; every page load is a full server render, and interactivity is layered on top with Alpine.js and occasional AJAX calls.</p>
+
+  <div class="arch-diagram" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:22px;font-family:Consolas,Monaco,monospace;font-size:12px;color:#334155;line-height:1.9;margin:14px 0 22px;overflow-x:auto;white-space:pre">
+Browser (Alpine.js + Blade)
+        |
+        | HTTP/HTTPS (port 8080)
+        v
+    Nginx (reverse proxy)
+        |
+        | FastCGI (Unix socket)
+        v
+    PHP-FPM (Laravel 13)
+        |
+        +-- MySQL / MariaDB (Eloquent ORM)
+        |
+        +-- Database Queue Worker
+        |
+        +-- Laravel Reverb (WebSocket, same port 8080)
+                |
+                | Private Channel: chat-room.{id}
+                v
+            Browser Echo Client (Pusher JS protocol)</div>
+
+  <h2>Request Lifecycle</h2>
+  <p>An incoming HTTP request flows through Nginx to PHP-FPM. Laravel's kernel runs the global middleware stack (CSRF protection, session, authentication) before routing to the appropriate controller action. Controllers resolve Eloquent models, perform business logic, and return Blade views or JSON responses.</p>
+
+  <p>For real-time features, the browser connects a Laravel Echo client to the Reverb WebSocket server. The Echo client uses the Pusher JavaScript protocol so the same client library works whether the backend is Reverb (self-hosted) or Pusher (cloud). When a chat message is sent, the controller dispatches a <code>MessageSent</code> event that implements <code>ShouldBroadcast</code>. Laravel's broadcasting system serialises the event and sends it over the appropriate private channel.</p>
+
+  <h2>Directory Structure</h2>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Path</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td><code>app/Broadcasting/</code></td><td>Channel authentication classes (ChatRoomChannel)</td></tr>
+        <tr><td><code>app/Enums/</code></td><td>PHP 8.1+ backed enums: Priority, UserRole, RequirementStatus, DeliberationStatus, ScheduleCategory, DecisionOutcome</td></tr>
+        <tr><td><code>app/Events/</code></td><td>Broadcastable Laravel events (MessageSent)</td></tr>
+        <tr><td><code>app/Http/Controllers/</code></td><td>Feature controllers; Admin sub-namespace at <code>Controllers/Admin/</code></td></tr>
+        <tr><td><code>app/Http/Middleware/</code></td><td>RoleMiddleware and TrackPageVisit middleware</td></tr>
+        <tr><td><code>app/Models/</code></td><td>Eloquent models for all 38 tables</td></tr>
+        <tr><td><code>database/migrations/</code></td><td>38 migration files; schema is additive (no destructive migrations in production)</td></tr>
+        <tr><td><code>database/seeders/</code></td><td>AdminUserSeeder, DemoDataSeeder, EventTypeRequirementSeeder</td></tr>
+        <tr><td><code>resources/views/</code></td><td>Blade templates organised by feature (dashboard, admin, chat, deliberations, events)</td></tr>
+        <tr><td><code>docker/</code></td><td>nginx.conf, php-fpm.conf, start.sh</td></tr>
+        <tr><td><code>routes/web.php</code></td><td>All 83 routes in a single file; admin routes grouped under middleware</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Middleware Stack</h2>
+  <ul>
+    <li><strong>web</strong> — session, CSRF, cookies (applied to all routes)</li>
+    <li><strong>auth</strong> — redirects unauthenticated users to <code>/login</code></li>
+    <li><strong>role:admin</strong> — RoleMiddleware alias; accepts comma-separated role list (e.g., <code>role:admin,director</code>)</li>
+    <li><strong>throttle:10,1</strong> — rate limit login to 10 attempts per minute per IP</li>
+    <li><strong>throttle:5,1</strong> — rate limit registration to 5 attempts per minute per IP</li>
+    <li><strong>TrackPageVisit</strong> — writes a row to <code>page_visits</code> for visitor analytics (applied selectively)</li>
+    <li><strong>trustProxies</strong> — trusts all proxies (<code>at: '*'</code>), required for correct HTTPS detection behind Render's load balancer</li>
+  </ul>
+</section>
+
+<!-- ===== SECTION 3: DATABASE SCHEMA ===== -->
+<section>
+  <span class="sa" id="s3"></span>
+  <h1>3. Database Schema</h1>
+
+  <p>The database consists of <strong>38 tables</strong> across 38 migration files. The schema was built incrementally: a compact initial set of tables was created in May 2026, with deliberation, audit, asset, and risk tables added in June, and the chat system added in August. All foreign key constraints use cascading deletes where the child record has no independent meaning (e.g., requirements cascade with events), and nullify (set null) where the relationship is optional (e.g., a user can be deleted without removing requirements they were assigned to).</p>
+
+  <span class="sa" id="s3-1"></span>
+  <h2>3.1 Core Tables</h2>
+
+  <h3>users</h3>
+  <p>Central identity table. Extended across three migrations to add role, department, approval workflow, and declared level columns.</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Column</th><th>Type</th><th>Nullable</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>bigint PK</td><td>No</td><td>Auto-increment primary key</td></tr>
+        <tr><td><code>name</code></td><td>varchar</td><td>No</td><td>Full display name</td></tr>
+        <tr><td><code>email</code></td><td>varchar unique</td><td>No</td><td>Login identifier; unique across all users</td></tr>
+        <tr><td><code>email_verified_at</code></td><td>timestamp</td><td>Yes</td><td>Standard Laravel email verification timestamp</td></tr>
+        <tr><td><code>password</code></td><td>varchar</td><td>No</td><td>Bcrypt-hashed password</td></tr>
+        <tr><td><code>remember_token</code></td><td>varchar(100)</td><td>Yes</td><td>Laravel remember-me token</td></tr>
+        <tr><td><code>role</code></td><td>varchar default 'employee'</td><td>No</td><td>UserRole enum value: admin | director | hod | employee</td></tr>
+        <tr><td><code>department_id</code></td><td>FK &rarr; departments</td><td>Yes</td><td>Null for admin/director; required for hod/employee</td></tr>
+        <tr><td><code>declared_level</code></td><td>varchar</td><td>Yes</td><td>Self-declared registration level (hod | employee); null for admin/director created by admin</td></tr>
+        <tr><td><code>is_approved</code></td><td>boolean default false</td><td>No</td><td>Admin must set to true before user can log in</td></tr>
+        <tr><td><code>approved_at</code></td><td>timestamp</td><td>Yes</td><td>When the approval was granted</td></tr>
+        <tr><td><code>approved_by</code></td><td>FK &rarr; users (nullOnDelete)</td><td>Yes</td><td>Which admin approved this account</td></tr>
+        <tr><td><code>created_at / updated_at</code></td><td>timestamps</td><td>No</td><td>Standard Laravel timestamps</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>departments</h3>
+  <p>Organisational units. Each department has a UI colour used in badges and cards throughout the dashboard.</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Column</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>bigint PK</td><td>Auto-increment primary key</td></tr>
+        <tr><td><code>name</code></td><td>varchar</td><td>Human-readable department name (e.g., "Information &amp; Communication Technology")</td></tr>
+        <tr><td><code>slug</code></td><td>varchar unique</td><td>URL-safe identifier (e.g., "ict"); used in route generation and display</td></tr>
+        <tr><td><code>head_name</code></td><td>varchar nullable</td><td>Name of the current Head of Department</td></tr>
+        <tr><td><code>head_contact</code></td><td>varchar nullable</td><td>Contact details for the HOD</td></tr>
+        <tr><td><code>color</code></td><td>varchar(7) default '#6366f1'</td><td>Hex colour code used in UI badges, cards, and department indicators</td></tr>
+        <tr><td><code>is_active</code></td><td>boolean default true</td><td>Inactive departments are hidden from event requirement assignment</td></tr>
+        <tr><td><code>timestamps</code></td><td>—</td><td>created_at, updated_at</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>planning_weeks</h3>
+  <p>Represents the organisational calendar. One planning week is flagged as "current" at any time. The dashboard defaults to showing the current week.</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Column</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>bigint PK</td><td>Auto-increment primary key</td></tr>
+        <tr><td><code>label</code></td><td>varchar</td><td>Human-readable label (e.g., "Week 20 – 12 May 2026")</td></tr>
+        <tr><td><code>week_start</code></td><td>date</td><td>Monday of the week; indexed for sorting</td></tr>
+        <tr><td><code>week_end</code></td><td>date</td><td>Sunday of the week</td></tr>
+        <tr><td><code>is_current</code></td><td>boolean default false</td><td>Only one row should have true at a time; enforced by admin set-current action</td></tr>
+        <tr><td><code>campus</code></td><td>varchar nullable</td><td>Physical campus or location context</td></tr>
+        <tr><td><code>schedule_reference</code></td><td>varchar nullable</td><td>Reference number linking to master schedule document</td></tr>
+        <tr><td><code>timestamps</code></td><td>—</td><td>created_at, updated_at</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>events</h3>
+  <p>Individual events within a planning week. An event can span multiple days (event_date to event_date_end). The type field drives which event_type_requirements template is applied when creating requirement checklists.</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Column</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>bigint PK</td><td>Auto-increment</td></tr>
+        <tr><td><code>planning_week_id</code></td><td>FK &rarr; planning_weeks (cascade)</td><td>Which week this event belongs to</td></tr>
+        <tr><td><code>name</code></td><td>varchar</td><td>Event name (e.g., "Board Strategy Meeting")</td></tr>
+        <tr><td><code>type</code></td><td>varchar</td><td>Event type used to load templates (e.g., "Meeting", "Training", "Ceremony")</td></tr>
+        <tr><td><code>schedule_category</code></td><td>varchar nullable</td><td>Secondary categorisation from master schedule</td></tr>
+        <tr><td><code>client</code></td><td>varchar nullable</td><td>Client or sponsoring body for the event</td></tr>
+        <tr><td><code>event_date</code></td><td>date</td><td>Start date; indexed with planning_week_id</td></tr>
+        <tr><td><code>event_date_end</code></td><td>date nullable</td><td>End date for multi-day events</td></tr>
+        <tr><td><code>event_time</code></td><td>time nullable</td><td>Start time</td></tr>
+        <tr><td><code>venue</code></td><td>varchar nullable</td><td>Room, hall, or location</td></tr>
+        <tr><td><code>participants_residential</code></td><td>smallint nullable</td><td>Expected residential participants count</td></tr>
+        <tr><td><code>participants_non_residential</code></td><td>smallint nullable</td><td>Expected non-residential participants count</td></tr>
+        <tr><td><code>coordinator</code></td><td>varchar nullable</td><td>Primary coordinator name</td></tr>
+        <tr><td><code>programme_assistant</code></td><td>varchar nullable</td><td>Supporting programme assistant name</td></tr>
+        <tr><td><code>package_remarks</code></td><td>varchar nullable</td><td>Package or catering remarks</td></tr>
+        <tr><td><code>schedule_reference</code></td><td>varchar nullable</td><td>Reference in master schedule document</td></tr>
+        <tr><td><code>description</code></td><td>text nullable</td><td>Free-text event description</td></tr>
+        <tr><td><code>timestamps</code></td><td>—</td><td>created_at, updated_at</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <span class="sa" id="s3-2"></span>
+  <h2>3.2 Requirements &amp; Templates</h2>
+
+  <h3>requirements</h3>
+  <p>The core operational table. Each row represents one task that a specific department must complete for a specific event. Built incrementally: the base table was created in May 2026, with priority/deadline/escalation added one week later, and status/assignment columns added in June.</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Column</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>bigint PK</td><td>Auto-increment</td></tr>
+        <tr><td><code>event_id</code></td><td>FK &rarr; events (cascade)</td><td>Which event this requirement belongs to</td></tr>
+        <tr><td><code>department_id</code></td><td>FK &rarr; departments (cascade)</td><td>Which department owns this requirement</td></tr>
+        <tr><td><code>description</code></td><td>varchar</td><td>Task description (e.g., "Confirm venue AV equipment")</td></tr>
+        <tr><td><code>priority</code></td><td>varchar default 'medium'</td><td>Priority enum: critical | high | medium | low (indexed)</td></tr>
+        <tr><td><code>status</code></td><td>varchar default 'not_started'</td><td>RequirementStatus enum with 9 states; drives readiness weight calculation</td></tr>
+        <tr><td><code>deadline</code></td><td>date nullable</td><td>When the task must be completed; overdue items are highlighted (indexed)</td></tr>
+        <tr><td><code>is_escalated</code></td><td>boolean default false</td><td>Manually or automatically escalated items (indexed)</td></tr>
+        <tr><td><code>escalated_at</code></td><td>timestamp nullable</td><td>When escalation was triggered</td></tr>
+        <tr><td><code>is_completed</code></td><td>boolean default false</td><td>Legacy boolean completion flag (kept for backward compatibility)</td></tr>
+        <tr><td><code>responsible_officer</code></td><td>varchar nullable</td><td>Named person accountable for this requirement</td></tr>
+        <tr><td><code>assigned_to</code></td><td>FK &rarr; users (nullOnDelete)</td><td>Specific user assigned to action this requirement</td></tr>
+        <tr><td><code>requires_deliberation</code></td><td>boolean default false</td><td>Flags requirements that need a formal deliberation record before they can be resolved</td></tr>
+        <tr><td><code>completed_at</code></td><td>timestamp nullable</td><td>When the requirement was marked complete</td></tr>
+        <tr><td><code>timestamps</code></td><td>—</td><td>created_at, updated_at</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>event_type_requirements</h3>
+  <p>Template table. Predefined requirement descriptions linked to an event type and department. When an admin creates a new event of type "Training", the system queries this table for all active rows matching that type and pre-populates the requirement checklist — saving significant manual data entry.</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Column</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>bigint PK</td><td>Auto-increment</td></tr>
+        <tr><td><code>event_type</code></td><td>varchar</td><td>Matches events.type (e.g., "Meeting", "Ceremony")</td></tr>
+        <tr><td><code>department_id</code></td><td>FK &rarr; departments (cascade)</td><td>Which department this template requirement belongs to</td></tr>
+        <tr><td><code>description</code></td><td>varchar</td><td>Template requirement text</td></tr>
+        <tr><td><code>priority</code></td><td>varchar</td><td>Default priority for this template item; editable at event creation time</td></tr>
+        <tr><td><code>deadline</code></td><td>varchar</td><td>Default deadline expression (e.g., "2 days before event")</td></tr>
+        <tr><td><code>sort_order</code></td><td>smallint default 0</td><td>Controls display order within a department's checklist</td></tr>
+        <tr><td><code>is_active</code></td><td>boolean default true</td><td>Inactive templates are excluded from auto-population; toggle in admin UI</td></tr>
+        <tr><td><code>timestamps</code></td><td>—</td><td>created_at, updated_at</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <span class="sa" id="s3-3"></span>
+  <h2>3.3 Deliberations</h2>
+
+  <p>The deliberation system provides a structured, auditable workflow for requirements that cannot be resolved unilaterally — such as procurement decisions, policy exceptions, or cross-departmental issues.</p>
+
+  <h3>deliberations</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Column</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>bigint PK</td><td>Auto-increment</td></tr>
+        <tr><td><code>event_id</code></td><td>FK &rarr; events (cascade)</td><td>Event this deliberation is raised under</td></tr>
+        <tr><td><code>requirement_id</code></td><td>FK &rarr; requirements (nullOnDelete, nullable)</td><td>Linked requirement; null for event-level deliberations</td></tr>
+        <tr><td><code>title</code></td><td>varchar</td><td>Short descriptive title of the issue</td></tr>
+        <tr><td><code>description</code></td><td>text nullable</td><td>Full description of the issue or decision needed</td></tr>
+        <tr><td><code>recommendation</code></td><td>text nullable</td><td>Recommended course of action (added in later migration)</td></tr>
+        <tr><td><code>status</code></td><td>varchar default 'open'</td><td>DeliberationStatus: open | closed | escalated</td></tr>
+        <tr><td><code>outcome</code></td><td>varchar nullable</td><td>DecisionOutcome enum value once resolved</td></tr>
+        <tr><td><code>impact_level</code></td><td>varchar default 'medium'</td><td>Severity: critical | medium | low</td></tr>
+        <tr><td><code>decision_due_date</code></td><td>date nullable</td><td>Deadline for the deliberation decision; indexed with status</td></tr>
+        <tr><td><code>decision_made</code></td><td>boolean default false</td><td>Whether a decision has been recorded</td></tr>
+        <tr><td><code>decision_notes</code></td><td>text nullable</td><td>Outcome notes and rationale</td></tr>
+        <tr><td><code>approved_by</code></td><td>FK &rarr; users (nullOnDelete)</td><td>User who approved or rejected the deliberation</td></tr>
+        <tr><td><code>approved_at</code></td><td>timestamp nullable</td><td>When approval/rejection was recorded</td></tr>
+        <tr><td><code>created_by</code></td><td>FK &rarr; users (nullOnDelete)</td><td>User who raised the deliberation</td></tr>
+        <tr><td><code>timestamps</code></td><td>—</td><td>created_at, updated_at</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>deliberation_comments</h3>
+  <p>Threaded discussion comments on a deliberation record. Any participant can add comments; comments are displayed chronologically.</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Column</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>bigint PK</td><td>Auto-increment</td></tr>
+        <tr><td><code>deliberation_id</code></td><td>FK &rarr; deliberations (cascade)</td><td>Parent deliberation</td></tr>
+        <tr><td><code>user_id</code></td><td>FK &rarr; users (cascade)</td><td>Comment author</td></tr>
+        <tr><td><code>comment</code></td><td>text</td><td>Comment body</td></tr>
+        <tr><td><code>timestamps</code></td><td>—</td><td>created_at, updated_at</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>deliberation_attachments</h3>
+  <p>File attachments uploaded to support a deliberation. Stored on the local filesystem; download and preview routes are available.</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Column</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>bigint PK</td><td>Auto-increment</td></tr>
+        <tr><td><code>deliberation_id</code></td><td>FK &rarr; deliberations (cascade)</td><td>Parent deliberation</td></tr>
+        <tr><td><code>user_id</code></td><td>FK &rarr; users (cascade)</td><td>Uploader</td></tr>
+        <tr><td><code>filename</code></td><td>varchar</td><td>Stored filename on disk</td></tr>
+        <tr><td><code>original_name</code></td><td>varchar</td><td>Original filename as uploaded</td></tr>
+        <tr><td><code>mime_type</code></td><td>varchar</td><td>MIME type for content-type header on download</td></tr>
+        <tr><td><code>size</code></td><td>bigint</td><td>File size in bytes</td></tr>
+        <tr><td><code>timestamps</code></td><td>—</td><td>created_at, updated_at</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>deliberation_participant (pivot)</h3>
+  <p>Tracks which users are participants in a deliberation, with an optional role for each participant (e.g., "chair", "reviewer", "observer").</p>
+  <pre><code><span class="cm">-- deliberation_participant pivot</span>
+<span class="kw">CREATE TABLE</span> deliberation_participant (
+  id                BIGINT PRIMARY KEY AUTO_INCREMENT,
+  deliberation_id   BIGINT NOT NULL REFERENCES deliberations(id) ON DELETE CASCADE,
+  user_id           BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  role              VARCHAR(255) NULL,
+  created_at        TIMESTAMP NULL,
+  updated_at        TIMESTAMP NULL
+);</code></pre>
+
+  <span class="sa" id="s3-4"></span>
+  <h2>3.4 Chat System Tables</h2>
+
+  <h3>chat_rooms</h3>
+  <p>Each chat room has a type that determines its purpose and membership scope. Department rooms are created one-per-department; event rooms are created when an event is set up; a single general room serves the whole organisation.</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Column</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>bigint PK</td><td>Auto-increment</td></tr>
+        <tr><td><code>name</code></td><td>varchar</td><td>Human-readable room name</td></tr>
+        <tr><td><code>type</code></td><td>varchar default 'department'</td><td>Room type: department | event | general</td></tr>
+        <tr><td><code>department_id</code></td><td>FK &rarr; departments (nullOnDelete)</td><td>Set for department-type rooms</td></tr>
+        <tr><td><code>event_id</code></td><td>FK &rarr; events (nullOnDelete)</td><td>Set for event-type rooms</td></tr>
+        <tr><td><code>slug</code></td><td>varchar unique</td><td>URL-safe identifier used in route model binding</td></tr>
+        <tr><td><code>description</code></td><td>text nullable</td><td>Optional room description</td></tr>
+        <tr><td><code>is_active</code></td><td>boolean default true</td><td>Inactive rooms are hidden</td></tr>
+        <tr><td><code>timestamps</code></td><td>—</td><td>created_at, updated_at</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>chat_messages</h3>
+  <p>Individual messages in a chat room. All messages are persisted; history is loaded via paginated GET /chat/{room}/messages endpoint.</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Column</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>bigint PK</td><td>Auto-increment</td></tr>
+        <tr><td><code>chat_room_id</code></td><td>FK &rarr; chat_rooms (cascade)</td><td>Room containing this message</td></tr>
+        <tr><td><code>user_id</code></td><td>FK &rarr; users (cascade)</td><td>Message author</td></tr>
+        <tr><td><code>message</code></td><td>text</td><td>Message body</td></tr>
+        <tr><td><code>read_at</code></td><td>timestamp nullable</td><td>Per-message read timestamp (legacy; replaced by chat_room_user tracking)</td></tr>
+        <tr><td><code>timestamps</code></td><td>—</td><td>created_at, updated_at</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>chat_room_user (pivot)</h3>
+  <p>Tracks membership and read position for each user in each room. The <code>last_read_message_id</code> is the highest message ID the user has seen — any message with a higher ID is "unread" for that user.</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Column</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>bigint PK</td><td>Auto-increment</td></tr>
+        <tr><td><code>chat_room_id</code></td><td>FK &rarr; chat_rooms (cascade)</td><td>Room</td></tr>
+        <tr><td><code>user_id</code></td><td>FK &rarr; users (cascade)</td><td>User</td></tr>
+        <tr><td><code>last_read_message_id</code></td><td>bigint nullable</td><td>Highest message ID the user has acknowledged; used to compute unread badge count</td></tr>
+        <tr><td><code>last_read_at</code></td><td>timestamp nullable</td><td>When the user last opened the room</td></tr>
+        <tr><td><code>timestamps</code></td><td>—</td><td>created_at, updated_at</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="ib note"><p><strong>Unread count calculation:</strong> For the nav badge, the system counts rooms where <code>chat_messages.id &gt; chat_room_user.last_read_message_id</code> (or last_read_message_id is null). The badge shows the count of rooms with unread messages, not the total number of unread messages.</p></div>
+
+  <span class="sa" id="s3-5"></span>
+  <h2>3.5 Supporting Tables</h2>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Table</th><th>Purpose</th><th>Key Columns</th></tr></thead>
+      <tbody>
+        <tr><td><strong>notifications</strong></td><td>Standard Laravel polymorphic notifications table</td><td>id (UUID), type, notifiable_type, notifiable_id, data (JSON), read_at</td></tr>
+        <tr><td><strong>audit_logs</strong></td><td>Action audit trail for requirements and events</td><td>id, user_id, action, model_type, model_id, old_values (JSON), new_values (JSON), ip_address, timestamps</td></tr>
+        <tr><td><strong>page_visits</strong></td><td>Visitor analytics written by TrackPageVisit middleware</td><td>id, user_id (nullable), path, ip_address, user_agent, timestamps</td></tr>
+        <tr><td><strong>assets</strong></td><td>Physical or digital assets tracked for events</td><td>id, name, description, category, quantity, timestamps</td></tr>
+        <tr><td><strong>event_assets</strong></td><td>Pivot: assets assigned to events</td><td>id, event_id, asset_id, quantity_required, timestamps</td></tr>
+        <tr><td><strong>vendors</strong></td><td>Supplier/vendor registry</td><td>id, name, contact, email, phone, category, timestamps</td></tr>
+        <tr><td><strong>vendor_quotes</strong></td><td>Quotes from vendors for event requirements</td><td>id, vendor_id, requirement_id, amount, description, status, timestamps</td></tr>
+        <tr><td><strong>budget_lines</strong></td><td>Budget line items for events</td><td>id, event_id, description, amount, category, timestamps</td></tr>
+        <tr><td><strong>risks</strong></td><td>Risk register entries linked to events</td><td>id, event_id, description, likelihood, impact, mitigation, status, timestamps</td></tr>
+        <tr><td><strong>meetings</strong></td><td>Formal planning meetings</td><td>id, event_id, title, meeting_date, location, timestamps</td></tr>
+        <tr><td><strong>meeting_agenda_items</strong></td><td>Agenda items for planning meetings</td><td>id, meeting_id, title, description, presenter, duration_minutes, timestamps</td></tr>
+        <tr><td><strong>post_event_reviews</strong></td><td>Post-event retrospective records</td><td>id, event_id, reviewer_id, overall_rating, notes, lessons_learned, timestamps</td></tr>
+        <tr><td><strong>requirement_dependencies</strong></td><td>Dependencies between requirements (one must complete before another)</td><td>id, requirement_id, depends_on_id, timestamps</td></tr>
+        <tr><td><strong>sessions</strong></td><td>Laravel database session storage</td><td>id (PK), user_id (indexed), ip_address, user_agent, payload, last_activity (indexed)</td></tr>
+        <tr><td><strong>cache</strong></td><td>Laravel database cache storage</td><td>key (PK), value, expiration</td></tr>
+        <tr><td><strong>jobs</strong></td><td>Laravel database queue storage</td><td>id, queue, payload, attempts, reserved_at, available_at, created_at</td></tr>
+        <tr><td><strong>password_reset_tokens</strong></td><td>Standard Laravel password reset tokens</td><td>email (PK), token, created_at</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ===== SECTION 4: ROLES & PERMISSIONS ===== -->
+<section>
+  <span class="sa" id="s4"></span>
+  <h1>4. Roles &amp; Permissions</h1>
+
+  <p>Access control is role-based. Four roles are defined as a PHP backed enum (<code>App\Enums\UserRole</code>) and stored as a string column on the users table. Role checking is performed by <code>RoleMiddleware</code>, which reads the comma-separated role list from the middleware parameter string and compares each against the authenticated user's <code>role</code> attribute using <code>UserRole::from()</code>.</p>
+
+  <pre><code><span class="cm">// app/Http/Middleware/RoleMiddleware.php</span>
+<span class="kw">public function</span> <span class="fn">handle</span>(Request $request, Closure $next, <span class="kw">string</span> ...$roles): Response
+{
+    $user    = $request-><span class="fn">user</span>();
+    $allowed = <span class="fn">collect</span>($roles)-><span class="fn">map</span>(<span class="kw">fn</span>($r) => UserRole::<span class="fn">from</span>($r));
+
+    <span class="kw">if</span> (! $allowed-><span class="fn">contains</span>($user-><span class="fn">role</span>)) {
+        <span class="fn">abort</span>(<span class="nm">403</span>, <span class="st">'You do not have permission to access this page.'</span>);
+    }
+
+    <span class="kw">return</span> $next($request);
+}</code></pre>
+
+  <div class="pgrid">
+    <div class="pc adm">
+      <h4><span class="badge bblue">Admin</span></h4>
+      <ul>
+        <li>Full system access</li>
+        <li>Create/edit/delete events</li>
+        <li>Manage requirement templates</li>
+        <li>Approve/reject user registrations</li>
+        <li>Assign roles to users</li>
+        <li>Access all departments' data</li>
+        <li>Send reminders (any dept)</li>
+        <li>Access /admin panel</li>
+        <li>Import planning weeks</li>
+        <li>View audit logs &amp; visitors</li>
+      </ul>
+    </div>
+    <div class="pc dir">
+      <h4><span class="badge bpurple">Director</span></h4>
+      <ul>
+        <li>Read-only across all departments</li>
+        <li>Executive overview dashboard</li>
+        <li>View all events and readiness</li>
+        <li>View department drill-down</li>
+        <li>View deliberations</li>
+        <li>No write operations</li>
+        <li>No admin panel access</li>
+      </ul>
+    </div>
+    <div class="pc hod">
+      <h4><span class="badge bblue">HOD</span></h4>
+      <ul>
+        <li>Manage own dept requirements</li>
+        <li>Update requirement status</li>
+        <li>Send reminders to own dept staff</li>
+        <li>Access own dept chat room</li>
+        <li>View all events (read)</li>
+        <li>Create deliberations</li>
+        <li>View other depts (read-only)</li>
+        <li>Department-scoped access</li>
+      </ul>
+    </div>
+    <div class="pc emp">
+      <h4><span class="badge bgreen">Employee</span></h4>
+      <ul>
+        <li>Update own dept checklist items</li>
+        <li>Mark requirements complete</li>
+        <li>View dashboard</li>
+        <li>Access own dept chat room</li>
+        <li>Read-only on other depts</li>
+        <li>No admin operations</li>
+        <li>Department-scoped access</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>Registration &amp; Approval Workflow</h2>
+  <p>New users self-register via <code>GET /register</code>. The registration form requires:</p>
+  <ul>
+    <li><strong>Name, email, password</strong></li>
+    <li><strong>Department</strong> — selected from active departments</li>
+    <li><strong>Declared level</strong> — hod or employee (stored in <code>declared_level</code>)</li>
+  </ul>
+  <p>On submission, the account is created with <code>is_approved = false</code> and <code>role = 'employee'</code> as defaults. The user cannot log in until an admin approves the account. At approval, the admin sets the final <code>role</code> (which may differ from the declared level — e.g., a user declaring "hod" may be approved as "employee" if another HOD already exists for that department).</p>
+
+  <p>Unapproved account blocking is enforced in <code>LoginController</code> — after standard credential validation, it checks <code>$user->is_approved</code> and returns an authentication error if false, regardless of correct password.</p>
+
+  <h2>UserRole Enum Capabilities</h2>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Role</th><th>isDepartmentScoped()</th><th>canManageEvents()</th><th>canSendReminders()</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge bblue">admin</span></td><td>false</td><td><strong>true</strong></td><td><strong>true</strong></td></tr>
+        <tr><td><span class="badge bpurple">director</span></td><td>false</td><td>false</td><td>false</td></tr>
+        <tr><td><span class="badge bblue">hod</span></td><td><strong>true</strong></td><td>false</td><td><strong>true</strong></td></tr>
+        <tr><td><span class="badge bgreen">employee</span></td><td><strong>true</strong></td><td>false</td><td>false</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="ib warn"><p><strong>Fine-grained checks:</strong> Beyond middleware, controllers use <code>abort_unless()</code> to enforce department scoping. For example, when an employee updates a requirement status, the controller verifies <code>$requirement->department_id === auth()->user()->department_id</code> before proceeding.</p></div>
+</section>
+
+<!-- ===== SECTION 5: FEATURE MODULES ===== -->
+<section>
+  <span class="sa" id="s5"></span>
+  <h1>5. Feature Modules</h1>
+
+  <span class="sa" id="s5-1"></span>
+  <h2>5.1 Dashboard</h2>
+
+  <p>The dashboard (<code>GET /</code>, handled by <code>DashboardController@index</code>) is the entry point for all roles. Each role sees a different view:</p>
+  <ul>
+    <li><strong>Admin/HOD/Employee:</strong> <code>resources/views/dashboard/index.blade.php</code> — the operational readiness board</li>
+    <li><strong>Director:</strong> <code>resources/views/dashboard/director.blade.php</code> — the executive summary view</li>
+  </ul>
+
+  <h3>Main Dashboard Features</h3>
+  <ul>
+    <li><strong>Week selector:</strong> Dropdown of all planning weeks; selecting a week reloads the page with that week's events</li>
+    <li><strong>Metric cards:</strong> Total Events, Fully Ready (100%), In Progress (1–99%), Not Started (0%), Average Readiness %</li>
+    <li><strong>Critical alerts panel:</strong> Lists all unresolved Critical-priority requirements across all events in the selected week</li>
+    <li><strong>Event cards:</strong> One card per event showing name, date, venue, coordinator, RAG status indicator, and dual progress bars</li>
+    <li><strong>Dual progress bars:</strong> Side-by-side bars for simple completion % (tasks done / total) and weighted readiness % (priority-weighted calculation)</li>
+    <li><strong>At-risk detection:</strong> Events with 2 or more unresolved Critical requirements are flagged with a warning indicator</li>
+    <li><strong>Overdue highlighting:</strong> Requirements past their <code>deadline</code> date are highlighted in the requirement tables</li>
+  </ul>
+
+  <h3>Director Dashboard Features</h3>
+  <ul>
+    <li><strong>Hero banner:</strong> Full-width KPI banner showing Total Events, Total Departments, Average Readiness %, and events at risk</li>
+    <li><strong>Completion donut:</strong> Alpine.js + CSS conic-gradient ring chart showing overall completion split</li>
+    <li><strong>Event timeline:</strong> Chronological list of events for the selected week with readiness indicators</li>
+    <li><strong>Department grid:</strong> Clickable cards for each active department; clicking opens a slide-in drill-down panel showing per-event breakdown for that department's requirements</li>
+  </ul>
+
+  <div class="rag-grid">
+    <div class="rag rg"><div class="rdot"></div><div class="rlabel">Green</div><div class="rdesc">100% readiness<br>All tasks complete</div></div>
+    <div class="rag ra"><div class="rdot"></div><div class="rlabel">Amber</div><div class="rdesc">1–99% readiness<br>In progress</div></div>
+    <div class="rag rr"><div class="rdot"></div><div class="rlabel">Red</div><div class="rdesc">0% readiness<br>Not started</div></div>
+  </div>
+
+  <span class="sa" id="s5-2"></span>
+  <h2>5.2 Event Management</h2>
+
+  <p>Events are the central organising unit. Each event belongs to a planning week and carries rich metadata about its schedule, logistics, and participants.</p>
+
+  <h3>Planning Weeks</h3>
+  <p>Admins manage planning weeks at <code>GET /admin/planning-weeks</code>. Weeks can be created manually or imported in bulk from a CSV file via <code>GET/POST /admin/planning-weeks/import</code>. Only one week can be "current" at a time; <code>PATCH /admin/planning-weeks/{week}/current</code> sets a week as current and unsets all others.</p>
+
+  <h3>Event Creation Workflow</h3>
+  <p>At <code>GET /admin/events/create</code>, the admin fills in event metadata (name, type, date, venue, coordinator, etc.). Crucially, when the event type is selected, an AJAX request fetches matching <code>event_type_requirements</code> rows grouped by department and renders a pre-populated checklist. The admin can:</p>
+  <ul>
+    <li>Check/uncheck individual requirements to include or exclude them</li>
+    <li>Override the priority for any individual item before saving</li>
+    <li>Override the deadline for any individual item</li>
+    <li>Add custom requirements beyond the template</li>
+  </ul>
+  <p>On <code>POST /admin/events</code>, the controller creates the event record, then bulk-inserts the selected requirements as <code>requirements</code> rows linked to both the event and their respective departments.</p>
+
+  <h3>Event Show Page</h3>
+  <p>At <code>GET /events/{event}</code>, all authenticated users see the event's requirements grouped by department. HODs and employees see their own department's checklist with update controls; other departments are shown in read-only mode. Admins see all departments with full controls.</p>
+
+  <span class="sa" id="s5-3"></span>
+  <h2>5.3 Requirement Management</h2>
+
+  <p>Requirements are the atomic unit of readiness. Each requirement represents one task a department must complete for an event to proceed smoothly.</p>
+
+  <h3>Status Updates (AJAX)</h3>
+  <p>The status update uses <code>PATCH /requirements/{requirement}/status</code> without a full page reload. Alpine.js sends the request and updates the DOM in place, changing the status badge and triggering a recalculation of the readiness bar. This provides a fluid, responsive UX even on slow connections.</p>
+
+  <h3>Assignment</h3>
+  <p><code>PATCH /requirements/{requirement}/assign</code> sets the <code>assigned_to</code> foreign key. This links a specific user (from the same department) to a requirement, making accountability explicit at the individual level rather than just the department level.</p>
+
+  <h3>Escalation</h3>
+  <p><code>PATCH /requirements/{requirement}/escalate</code> sets <code>is_escalated = true</code> and records <code>escalated_at</code>. Escalated items appear in the Critical Alerts panel regardless of their priority, and are highlighted throughout the UI. Escalation can be triggered manually by an HOD or automatically by the system when a Critical/High requirement passes its deadline without being completed.</p>
+
+  <span class="sa" id="s5-4"></span>
+  <h2>5.4 Priority System</h2>
+
+  <p>The priority system is the backbone of the weighted readiness calculation. It ensures that completing trivial tasks cannot mask the presence of unresolved critical blockers.</p>
+
+  <h3>Priority Levels &amp; Weights</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Priority</th><th>Weight</th><th>Badge Style</th><th>Sort Order</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge br">Critical</span></td><td>5</td><td>Red (bg-red-100 / text-red-700)</td><td>1 (highest urgency)</td></tr>
+        <tr><td><span class="badge bo">High</span></td><td>3</td><td>Orange (bg-orange-100 / text-orange-700)</td><td>2</td></tr>
+        <tr><td><span class="badge ba">Medium</span></td><td>2</td><td>Amber (bg-amber-100 / text-amber-700)</td><td>3</td></tr>
+        <tr><td><span class="badge bg2">Low</span></td><td>1</td><td>Gray (bg-gray-100 / text-gray-600)</td><td>4 (lowest urgency)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Weighted Readiness Formula</h3>
+  <p>The weighted readiness percentage is calculated per department per event:</p>
+  <div class="formula">
+    Weighted Score = &sum;(priority_weight &times; status_readiness_weight)<br>
+    Weighted Max = &sum;(priority_weight)<br>
+    Weighted Readiness % = (Weighted Score &divide; Weighted Max) &times; 100
+  </div>
+  <p>Where <code>status_readiness_weight</code> is the partial-completion value from the <code>RequirementStatus</code> enum (see Section 10). A requirement with status "approved" (0.8) contributes 80% of its weight, while "in_progress" (0.5) contributes 50%.</p>
+
+  <h3>At-Risk Detection</h3>
+  <p>An event is flagged as "at risk" when it has 2 or more requirements with:</p>
+  <ul>
+    <li>Priority = Critical or High</li>
+    <li>Status not in [completed, approved]</li>
+    <li>deadline &lt;= event_date (i.e., the deadline has passed or the task must be done before the event)</li>
+  </ul>
+
+  <span class="sa" id="s5-5"></span>
+  <h2>5.5 Deliberations</h2>
+
+  <p>The deliberation module provides a formal, documented process for resolving requirements that cannot be actioned unilaterally — for example, decisions that require budget approval, policy exceptions, or cross-departmental coordination.</p>
+
+  <h3>Lifecycle</h3>
+  <ol>
+    <li>A user (any role) creates a deliberation at <code>POST /events/{event}/deliberations</code> — typically linked to a specific requirement via <code>requirement_id</code></li>
+    <li>Status starts as <strong>open</strong></li>
+    <li>Participants are added; threaded comments are used for discussion</li>
+    <li>Supporting documents are attached via file upload</li>
+    <li>A recommendation is recorded</li>
+    <li>An admin or director approves (<code>POST .../approve</code>) or rejects (<code>POST .../reject</code>) via <code>DeliberationApprovalController</code></li>
+    <li>On approval, status moves to <strong>closed</strong> with <code>decision_made = true</code> and <code>approved_by</code> set</li>
+    <li>Unresolved deliberations can be escalated (<code>PATCH .../escalate</code>) to status <strong>escalated</strong></li>
+  </ol>
+
+  <h3>Impact on Readiness</h3>
+  <p>Requirements that are "under deliberation" get a <code>status_readiness_weight</code> of 0.2, reflecting that work is happening but the outcome is uncertain. Once approved or completed, the weight jumps to 0.8 or 1.0 respectively, improving the event's readiness score.</p>
+
+  <span class="sa" id="s5-6"></span>
+  <h2>5.6 Real-time Chat System</h2>
+
+  <p>The chat system provides in-app communication using Laravel Reverb's WebSocket server. All messages are persisted in the <code>chat_messages</code> table, giving a complete communication audit trail.</p>
+
+  <h3>Room Structure</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Type</th><th>Count</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>department</td><td>One per active department</td><td>Private to users of that department (HOD + employees)</td></tr>
+        <tr><td>event</td><td>One per upcoming event</td><td>Created when admin sets up rooms for an event (POST /chat/setup)</td></tr>
+        <tr><td>general</td><td>One total</td><td>Organisation-wide; accessible to all authenticated users</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>WebSocket Channel Authentication</h3>
+  <p>All chat channels are <em>private</em> channels. The channel name is <code>chat-room.{id}</code>. When the browser Echo client subscribes, Laravel handles the auth request and calls <code>ChatRoomChannel::join()</code>:</p>
+  <pre><code><span class="cm">// app/Broadcasting/ChatRoomChannel.php</span>
+<span class="kw">public function</span> <span class="fn">join</span>(User $user, ChatRoom $chatRoom): <span class="kw">bool</span>
+{
+    <span class="kw">return</span> $chatRoom-><span class="fn">canAccess</span>($user);
+}</code></pre>
+  <p>The <code>canAccess()</code> method on the ChatRoom model checks the room type and user role/department to determine membership.</p>
+
+  <h3>MessageSent Broadcast Event</h3>
+  <pre><code><span class="cm">// Channel: private-chat-room.{id}</span>
+<span class="cm">// Event name (broadcastAs): message.sent</span>
+<span class="cm">// Payload:</span>
+{
+  <span class="st">"id"</span>: <span class="nm">42</span>,
+  <span class="st">"message"</span>: <span class="st">"Please confirm the AV setup for tomorrow"</span>,
+  <span class="st">"created_at"</span>: <span class="st">"14:32"</span>,
+  <span class="st">"user"</span>: {
+    <span class="st">"id"</span>: <span class="nm">5</span>,
+    <span class="st">"name"</span>: <span class="st">"Alice Mensah"</span>,
+    <span class="st">"role"</span>: <span class="st">"Head of Department"</span>
+  }
+}</code></pre>
+
+  <h3>Typing Indicators</h3>
+  <p>Typing indicators use Reverb's <em>whisper</em> feature — client-side ephemeral events that are not stored in the database. When a user starts typing, the Echo client whispers a <code>typing</code> event with the user's name to all other subscribers. The indicator automatically fades after a timeout.</p>
+
+  <h3>Unread Badge</h3>
+  <p>The navigation bar shows a badge with the count of rooms that have unread messages. The frontend polls <code>GET /chat/unread</code> on an interval and updates the badge count. Clicking the badge reveals a popup listing the rooms with unread messages and the count per room. Opening a room triggers <code>PATCH /chat/{room}/read</code>, which updates <code>chat_room_user.last_read_message_id</code> to the latest message ID.</p>
+
+  <span class="sa" id="s5-7"></span>
+  <h2>5.7 Admin Panel</h2>
+
+  <p>The admin panel lives under <code>/admin</code> and is protected by the <code>role:admin</code> middleware. It uses a dedicated sidebar layout separate from the main application layout.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Route</th><th>Controller</th><th>Feature</th></tr></thead>
+      <tbody>
+        <tr><td><code>GET /admin</code></td><td>AdminDashboardController</td><td>Overview with KPIs, 7-day visitor chart, department readiness comparison, quick action links</td></tr>
+        <tr><td><code>/admin/events/*</code></td><td>AdminEventController</td><td>Full event CRUD plus add/remove individual requirements from an event</td></tr>
+        <tr><td><code>/admin/planning-weeks/*</code></td><td>PlanningWeekController</td><td>Full CRUD for planning weeks, bulk CSV import, set-current action</td></tr>
+        <tr><td><code>/admin/event-type-requirements/*</code></td><td>EventTypeRequirementController</td><td>CRUD for requirement templates with inline editing and active/inactive toggle</td></tr>
+        <tr><td><code>GET /admin/staff</code></td><td>AdminStaffController</td><td>Per-user task completion rates and performance overview</td></tr>
+        <tr><td><code>GET /admin/visitors</code></td><td>AdminVisitorController</td><td>Page visit analytics from page_visits table with filters and charts</td></tr>
+        <tr><td><code>GET /admin/audit-log</code></td><td>AuditLogController</td><td>Browse and filter audit log entries</td></tr>
+        <tr><td><code>/admin/users/*</code></td><td>UserController (Admin)</td><td>Approve registrations, assign/change roles, revoke access, delete users</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Visitor Analytics</h3>
+  <p>The <code>TrackPageVisit</code> middleware writes to the <code>page_visits</code> table on each request — capturing the URL path, IP address, user agent, and authenticated user ID (if any). The admin dashboard aggregates these into a 7-day bar chart rendered with Alpine.js, showing daily visit counts. This provides basic usage analytics without requiring a third-party tool.</p>
+
+  <h3>Staff Performance</h3>
+  <p>The staff performance view (<code>GET /admin/staff</code>) shows a table of all HOD and employee users with their task completion statistics: total requirements assigned, completed count, completion rate %, and overdue count. This enables management to identify individuals who may need support.</p>
+
+  <span class="sa" id="s5-8"></span>
+  <h2>5.8 Notifications &amp; Reminders</h2>
+
+  <p>Laravel's notification system is used for in-app and email alerts. Notifications are stored in the standard <code>notifications</code> table (polymorphic) and optionally dispatched to the user's email address.</p>
+
+  <h3>Reminder Workflow</h3>
+  <p>Any HOD or admin can trigger department reminders for an event via <code>POST /events/{event}/reminders</code>. <code>ReminderController</code> queries all incomplete requirements for the relevant department, builds a notification containing the full list of pending tasks, and dispatches it to each department user via the database and mail channels.</p>
+
+  <h3>Notification Centre</h3>
+  <p>The bell icon in the navigation header shows a badge with the count of unread notifications. <code>GET /notifications</code> shows the full notification list; <code>PATCH /notifications/{notification}/read</code> marks a single notification read; <code>PATCH /notifications/read-all</code> marks all as read.</p>
+
+  <span class="sa" id="s5-9"></span>
+  <h2>5.9 Audit &amp; Reporting</h2>
+
+  <h3>Audit Log</h3>
+  <p>Changes to requirements and events are written to the <code>audit_logs</code> table. Each row captures the acting user, the action performed, the model type and ID, and JSON snapshots of old and new values. The admin audit log view at <code>GET /admin/audit-log</code> displays a filterable and paginated list of all audit entries.</p>
+
+  <h3>CSV Export</h3>
+  <p><code>GET /events/{event}/export</code> generates a CSV file containing all requirements for the event, grouped by department, with their current status, priority, deadline, responsible officer, and completion state. This can be imported into Excel or shared with stakeholders who do not have system access.</p>
+
+  <h3>Print Report</h3>
+  <p><code>GET /events/{event}/print</code> renders a print-optimised Blade view with all event details and department requirement tables. Browser print or PDF export produces a clean A4 document suitable for physical distribution in planning meetings.</p>
+
+  <h3>Post-Event Reviews</h3>
+  <p>The <code>post_event_reviews</code> table stores retrospective reviews after an event concludes. Reviews capture an overall rating, freeform notes, and lessons learned, providing an institutional knowledge base for future event planning.</p>
+</section>

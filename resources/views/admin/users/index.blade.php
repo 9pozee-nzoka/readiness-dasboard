@@ -8,12 +8,21 @@
             <p class="text-sm text-gray-500 mt-1">Approve registrations and assign roles</p>
         </div>
 
-        @if ($pendingCount > 0)
-            <span class="inline-flex items-center gap-1.5 bg-amber-100 text-amber-800 text-sm font-medium px-3 py-1.5 rounded-full">
-                <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-                {{ $pendingCount }} pending approval{{ $pendingCount !== 1 ? 's' : '' }}
-            </span>
-        @endif
+        <div class="flex items-center gap-3">
+            @if ($pendingCount > 0)
+                <span class="inline-flex items-center gap-1.5 bg-amber-100 text-amber-800 text-sm font-medium px-3 py-1.5 rounded-full">
+                    <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                    {{ $pendingCount }} pending approval{{ $pendingCount !== 1 ? 's' : '' }}
+                </span>
+            @endif
+            <a href="{{ route('admin.users.create') }}"
+                class="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Create user
+            </a>
+        </div>
     </div>
 
     {{-- Filter tabs --}}

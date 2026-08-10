@@ -9,7 +9,9 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
 
 class UserController extends Controller
@@ -18,6 +20,56 @@ class UserController extends Controller
     {
         // All actions in this controller require admin role
         abort_unless(Auth::user()?->isAdmin(), 403);
+    }
+
+    /**
+     * Show the form for creating a new user.
+     */
+    public function create(): View
+    {
+        $departments = Department::where('is_active', true)->orderBy('name')->get();
+        $assignableRoles = [UserRole::Employee, UserRole::Hod, UserRole::Director, UserRole::Admin];
+
+        return view('admin.users.create', compact('departments', 'assignableRoles'));
+    }
+
+    /**
+     * Store a newly created user.
+     */
+    public function store(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', Password::defaults()],
+            'role' => ['required', Rule::enum(UserRole::class)],
+            'department_id' => [
+                Rule::when(
+                    fn () => in_array($request->input('role'), [UserRole::Hod->value, UserRole::Employee->value]),
+                    ['required', 'exists:departments,id'],
+                    ['nullable'],
+                ),
+            ],
+        ], [
+            'department_id.required' => 'A department is required for the selected role.',
+        ]);
+
+        $role = UserRole::from($validated['role']);
+        $departmentId = $role->isDepartmentScoped() ? $validated['department_id'] : null;
+
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'role' => $role,
+            'department_id' => $departmentId,
+            'is_approved' => true,
+            'approved_at' => now(),
+            'approved_by' => Auth::id(),
+        ]);
+
+        return redirect()->route('admin.users.index')
+            ->with('success', $user->name.' has been created as '.$role->label().'.');
     }
 
     /**
@@ -45,7 +97,7 @@ class UserController extends Controller
      */
     public function edit(User $user): View
     {
-        $departments  = Department::where('is_active', true)->orderBy('name')->get();
+        $departments = Department::where('is_active', true)->orderBy('name')->get();
         $assignableRoles = [UserRole::Employee, UserRole::Hod, UserRole::Director, UserRole::Admin];
 
         return view('admin.users.edit', compact('user', 'departments', 'assignableRoles'));
@@ -57,7 +109,7 @@ class UserController extends Controller
     public function update(Request $request, User $user): RedirectResponse
     {
         $validated = $request->validate([
-            'role'          => ['required', Rule::enum(UserRole::class)],
+            'role' => ['required', Rule::enum(UserRole::class)],
             'department_id' => [
                 Rule::when(
                     fn () => in_array($request->input('role'), [UserRole::Hod->value, UserRole::Employee->value]),
@@ -75,7 +127,7 @@ class UserController extends Controller
         $departmentId = $role->isDepartmentScoped() ? $validated['department_id'] : null;
 
         $user->update([
-            'role'          => $role,
+            'role' => $role,
             'department_id' => $departmentId,
         ]);
 

@@ -16,15 +16,30 @@
                     </span>
                 </div>
                 <p class="text-sm text-gray-500 mt-1">
-                    {{ $event->event_date->format('l, d F Y') }}
+                    {{ $event->dateRangeLabel() }}
                     @if ($event->event_time) &bull; {{ \Carbon\Carbon::parse($event->event_time)->format('H:i') }} @endif
                     @if ($event->venue) &bull; {{ $event->venue }} @endif
+                    @if ($event->client) &bull; {{ $event->client }} @endif
                 </p>
+                @if ($event->schedule_category || $event->coordinator || $event->totalParticipants())
+                    <p class="text-xs text-gray-500 mt-2">
+                        @if ($event->schedule_category) {{ $event->schedule_category->label() }} @endif
+                        @if ($event->schedule_reference) &bull; {{ $event->schedule_reference }} @endif
+                        @if ($event->coordinator) &bull; Coordinator: {{ $event->coordinator }} @endif
+                        @if ($event->programme_assistant) &bull; PA: {{ $event->programme_assistant }} @endif
+                        @if ($event->totalParticipants()) &bull; {{ $event->totalParticipants() }} participants @endif
+                        @if ($event->package_remarks) &bull; {{ $event->package_remarks }} @endif
+                    </p>
+                @endif
             </div>
             <div class="flex items-center gap-2 shrink-0">
                 <a href="{{ route('admin.events.edit', $event) }}"
                     class="text-sm border border-gray-300 hover:border-gray-400 text-gray-700 px-3 py-1.5 rounded-lg font-medium transition-colors">
                     Edit Event
+                </a>
+                <a href="{{ route('events.print', $event) }}"
+                    class="text-sm border border-gray-300 hover:border-gray-400 text-gray-700 px-3 py-1.5 rounded-lg font-medium transition-colors">
+                    Print Report
                 </a>
                 <a href="{{ route('events.export', $event) }}"
                     class="text-sm border border-gray-300 hover:border-gray-400 text-gray-700 px-3 py-1.5 rounded-lg font-medium transition-colors">

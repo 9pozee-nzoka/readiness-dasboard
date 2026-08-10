@@ -7,7 +7,7 @@
             ['label' => 'Total Staff', 'value' => $totalUsers, 'sub' => $pendingApprovals.' pending approval', 'color' => 'indigo'],
             ['label' => 'Total Events', 'value' => $totalEvents, 'sub' => count($upcomingEvents).' upcoming', 'color' => 'blue'],
             ['label' => 'Avg. Readiness', 'value' => $avgReadiness.'%', 'sub' => 'Current week', 'color' => $avgReadiness >= 80 ? 'green' : ($avgReadiness >= 40 ? 'amber' : 'red')],
-            ['label' => 'Completion Rate', 'value' => $completionRate.'%', 'sub' => 'All requirements', 'color' => $completionRate >= 80 ? 'green' : ($completionRate >= 40 ? 'amber' : 'red')],
+            ['label' => 'Decision Readiness', 'value' => $avgDecisionReadiness.'%', 'sub' => 'Approved / Completed', 'color' => $avgDecisionReadiness >= 80 ? 'green' : ($avgDecisionReadiness >= 40 ? 'amber' : 'red')],
         ] as $card)
             @php
                 $colors = [
@@ -111,22 +111,48 @@
             @endif
         </div>
 
-        {{-- Quick actions --}}
+        {{-- Pending Deliberations --}}
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-            <h2 class="font-semibold text-gray-900 mb-4">Quick Actions</h2>
-            <div class="space-y-2">
-                @foreach ([
-                    ['route' => 'admin.events.create', 'label' => 'Add New Event', 'color' => 'bg-indigo-600 hover:bg-indigo-700 text-white'],
-                    ['route' => 'admin.users.index',   'label' => 'Review Approvals', 'color' => 'bg-amber-500 hover:bg-amber-600 text-white'],
-                    ['route' => 'admin.staff.index',   'label' => 'View Staff Performance', 'color' => 'bg-white hover:bg-gray-50 text-gray-700 border border-gray-300'],
-                    ['route' => 'admin.visitors.index','label' => 'Visitor Report', 'color' => 'bg-white hover:bg-gray-50 text-gray-700 border border-gray-300'],
-                ] as $action)
-                    <a href="{{ route($action['route']) }}"
-                        class="block w-full text-center text-sm font-medium px-4 py-2.5 rounded-lg transition-colors {{ $action['color'] }}">
-                        {{ $action['label'] }}
-                    </a>
-                @endforeach
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="font-semibold text-gray-900">Pending Decisions</h2>
+                @if ($overdueDeliberations > 0)
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">
+                        {{ $overdueDeliberations }} overdue
+                    </span>
+                @endif
             </div>
+            @if ($pendingDeliberations->isEmpty())
+                <p class="text-sm text-gray-400 text-center py-6">No pending deliberations</p>
+            @else
+                <div class="space-y-3">
+                    @foreach ($pendingDeliberations as $delib)
+                        @php $isOverdue = $delib->isOverdue(); @endphp
+                        <a href="{{ route('deliberations.show', [$delib->event, $delib]) }}"
+                            class="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group">
+                            <div class="w-2 h-2 rounded-full shrink-0 mt-1.5
+                                {{ match($delib->status->value) {
+                                    'escalated' => 'bg-red-500',
+                                    default => match($delib->impact_level) {
+                                        'critical' => 'bg-red-500',
+                                        'medium' => 'bg-amber-400',
+                                        'low' => 'bg-gray-400',
+                                        default => 'bg-gray-400',
+                                    },
+                                } }}">
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-900 truncate group-hover:text-indigo-600">{{ $delib->title }}</p>
+                                <p class="text-xs text-gray-400 mt-0.5">{{ $delib->event->name }}</p>
+                                @if ($delib->decision_due_date)
+                                    <p class="text-xs {{ $isOverdue ? 'text-red-600 font-semibold' : 'text-gray-400' }} mt-0.5">
+                                        Due {{ $delib->decision_due_date->format('d M Y') }}{{ $isOverdue ? ' (OVERDUE)' : '' }}
+                                    </p>
+                                @endif
+                            </div>
+                        </a>
+                    @endforeach
+                </div>
+            @endif
         </div>
     </div>
 </x-layouts.admin>

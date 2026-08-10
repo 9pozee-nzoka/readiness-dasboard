@@ -37,11 +37,13 @@
             @php
                 $navItems = [
                     ['route' => 'admin.dashboard', 'label' => 'Overview', 'icon' => 'home'],
+                    ['route' => 'admin.planning-weeks.index', 'label' => 'Planning Weeks', 'icon' => 'calendar'],
                     ['route' => 'admin.events.index', 'label' => 'Events', 'icon' => 'calendar'],
                     ['route' => 'admin.event-type-requirements.index', 'label' => 'Req. Templates', 'icon' => 'template'],
                     ['route' => 'admin.staff.index', 'label' => 'Staff', 'icon' => 'users'],
                     ['route' => 'admin.users.index', 'label' => 'User Approvals', 'icon' => 'user-check'],
                     ['route' => 'admin.visitors.index', 'label' => 'Visitors', 'icon' => 'eye'],
+                    ['route' => 'admin.audit-log.index', 'label' => 'Audit Log', 'icon' => 'clipboard-list'],
                 ];
             @endphp
 
@@ -57,6 +59,14 @@
                         @if ($pending > 0)
                             <span class="ml-auto inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-500 text-white text-[10px] font-bold">
                                 {{ $pending }}
+                            </span>
+                        @endif
+                    @endif
+                    @if ($item['route'] === 'admin.dashboard')
+                        @php $notifCount = auth()->user()->unreadNotifications()->count(); @endphp
+                        @if ($notifCount > 0)
+                            <span class="ml-auto inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold">
+                                {{ $notifCount > 9 ? '9+' : $notifCount }}
                             </span>
                         @endif
                     @endif

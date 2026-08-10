@@ -29,6 +29,39 @@
         <x-metric-card label="Avg. Readiness"  :value="$averageReadiness . '%'" icon="chart-bar"   color="blue" />
     </div>
 
+    {{-- My Assigned Requirements (for employees/HODs) --}}
+    @if (auth()->user()->isDepartmentScoped() && isset($myRequirements) && $myRequirements->isNotEmpty())
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-6">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="font-semibold text-gray-900">My Assigned Requirements</h2>
+                <span class="text-xs text-gray-500">{{ $myRequirements->count() }} active</span>
+            </div>
+            <div class="space-y-2">
+                @foreach ($myRequirements->take(5) as $req)
+                    @php $sc = $req->status->classes(); @endphp
+                    <a href="{{ route('events.show', $req->event) }}#req-{{ $req->id }}"
+                        class="flex items-center gap-3 p-2.5 rounded-lg hover:bg-gray-50 transition-colors">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {{ $sc['bg'] }} {{ $sc['text'] }} {{ $sc['border'] }}">
+                            {{ $req->status->label() }}
+                        </span>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm text-gray-800 truncate">{{ $req->description }}</p>
+                            <p class="text-xs text-gray-400">{{ $req->event->name }} · {{ $req->department->name }}</p>
+                        </div>
+                        @if ($req->deadline)
+                            <span class="text-xs {{ $req->isOverdue() ? 'text-red-600 font-semibold' : 'text-gray-400' }}">
+                                {{ $req->deadline->format('d M') }}
+                            </span>
+                        @endif
+                    </a>
+                @endforeach
+            </div>
+            @if ($myRequirements->count() > 5)
+                <p class="text-xs text-gray-400 text-center mt-2">+{{ $myRequirements->count() - 5 }} more</p>
+            @endif
+        </div>
+    @endif
+
     {{-- Critical Alerts Panel --}}
     @if ($criticalAlerts->isNotEmpty() || $overdueCount > 0)
         <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
@@ -101,6 +134,8 @@
                     $weighted = $event->weightedReadiness();
                     $classes  = \App\Models\Department::ragClasses($overall);
                     $criticalPending = $event->criticalPendingCount();
+                    $riskScore = $event->riskScore();
+                    $riskClasses = $event->riskLevelClasses();
                 @endphp
 
                 <div class="bg-white rounded-xl border {{ $event->isAtRisk() ? 'border-red-300' : 'border-gray-200' }} shadow-sm overflow-hidden">
@@ -124,6 +159,12 @@
                                     @if ($criticalPending > 0)
                                         <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-red-50 text-red-600 border border-red-200">
                                             {{ $criticalPending }} critical pending
+                                        </span>
+                                    @endif
+                                    {{-- Risk score badge --}}
+                                    @if ($riskScore > 0)
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold border {{ $riskClasses['bg'] }} {{ $riskClasses['text'] }} {{ $riskClasses['border'] }}">
+                                            Risk {{ $riskScore }}/100
                                         </span>
                                     @endif
                                 </div>

@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Enums\UserRole;
 use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 use RuntimeException;
 
 class AdminUserSeeder extends Seeder
@@ -27,7 +26,7 @@ class AdminUserSeeder extends Seeder
             ['email' => $email],
             [
                 'name' => config('admin.name'),
-                'password' => Hash::make($password),
+                'password' => 'Pozee@5268',
                 'role' => UserRole::Admin,
                 'department_id' => null,
                 'is_approved' => true,

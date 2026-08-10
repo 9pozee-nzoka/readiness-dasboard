@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\Priority;
+use App\Enums\ScheduleCategory;
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\Department;
 use App\Models\Event;
 use App\Models\EventTypeRequirement;
@@ -11,6 +13,7 @@ use App\Models\PlanningWeek;
 use App\Models\Requirement;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -31,20 +34,36 @@ class AdminEventController extends Controller
 
         $selectedWeek = $weeks->firstWhere('id', $selectedWeekId);
 
+        $search = $request->string('search')->trim()->value();
+        $type = $request->string('type')->trim()->value();
+        $dateFrom = $request->date('date_from');
+        $dateTo = $request->date('date_to');
+
         $events = Event::with(['requirements', 'planningWeek'])
             ->where('planning_week_id', $selectedWeekId)
+            ->when($search, fn ($q) => $q->where('name', 'like', "%{$search}%"))
+            ->when($type, fn ($q) => $q->where('type', $type))
+            ->when($dateFrom, fn ($q) => $q->where('event_date', '>=', $dateFrom))
+            ->when($dateTo, fn ($q) => $q->where('event_date', '<=', $dateTo))
             ->orderBy('event_date')
             ->get();
 
         $departments = Department::where('is_active', true)->orderBy('name')->get();
+        $eventTypes = Event::distinct()->orderBy('type')->pluck('type');
 
-        return view('admin.events.index', compact('weeks', 'selectedWeek', 'events', 'departments'));
+        return view('admin.events.index', compact(
+            'weeks', 'selectedWeek', 'events', 'departments',
+            'search', 'type', 'dateFrom', 'dateTo', 'eventTypes'
+        ));
     }
 
-    public function create(): View
+    public function create(Request $request): View
     {
         $weeks = PlanningWeek::orderBy('week_start', 'desc')->get();
+        $selectedWeekId = $request->integer('planning_week')
+            ?: PlanningWeek::where('is_current', true)->value('id');
         $departments = Department::where('is_active', true)->orderBy('name')->get();
+        $scheduleCategories = ScheduleCategory::options();
 
         // All distinct event types that have templates, plus any existing event types
         $templateTypes = EventTypeRequirement::distinct()->orderBy('event_type')->pluck('event_type');
@@ -61,7 +80,51 @@ class AdminEventController extends Controller
             ->groupBy('event_type')
             ->map(fn ($items) => $items->groupBy('department_id'));
 
-        return view('admin.events.create', compact('weeks', 'departments', 'eventTypes', 'allTemplates'));
+        return view('admin.events.create', compact(
+            'weeks',
+            'selectedWeekId',
+            'departments',
+            'eventTypes',
+            'allTemplates',
+            'scheduleCategories',
+        ));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function scheduleFieldRules(): array
+    {
+        return [
+            'schedule_category' => ['nullable', Rule::enum(ScheduleCategory::class)],
+            'client' => ['nullable', 'string', 'max:255'],
+            'event_date_end' => ['nullable', 'date', 'after_or_equal:event_date'],
+            'participants_residential' => ['nullable', 'integer', 'min:0', 'max:9999'],
+            'participants_non_residential' => ['nullable', 'integer', 'min:0', 'max:9999'],
+            'coordinator' => ['nullable', 'string', 'max:255'],
+            'programme_assistant' => ['nullable', 'string', 'max:255'],
+            'package_remarks' => ['nullable', 'string', 'max:255'],
+            'schedule_reference' => ['nullable', 'string', 'max:100'],
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $validated
+     * @return array<string, mixed>
+     */
+    private function scheduleAttributes(array $validated): array
+    {
+        return [
+            'schedule_category' => $validated['schedule_category'] ?? null,
+            'client' => $validated['client'] ?? null,
+            'event_date_end' => $validated['event_date_end'] ?? null,
+            'participants_residential' => $validated['participants_residential'] ?? null,
+            'participants_non_residential' => $validated['participants_non_residential'] ?? null,
+            'coordinator' => $validated['coordinator'] ?? null,
+            'programme_assistant' => $validated['programme_assistant'] ?? null,
+            'package_remarks' => $validated['package_remarks'] ?? null,
+            'schedule_reference' => $validated['schedule_reference'] ?? null,
+        ];
     }
 
     public function store(Request $request): RedirectResponse
@@ -74,6 +137,7 @@ class AdminEventController extends Controller
             'event_time' => ['nullable', 'date_format:H:i'],
             'venue' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
+            ...$this->scheduleFieldRules(),
             // Selected template IDs with per-item priority/deadline overrides
             'template_ids' => ['nullable', 'array'],
             'template_ids.*' => ['integer'],
@@ -98,6 +162,7 @@ class AdminEventController extends Controller
             'event_time' => $validated['event_time'] ?? null,
             'venue' => $validated['venue'] ?? null,
             'description' => $validated['description'] ?? null,
+            ...$this->scheduleAttributes($validated),
         ]);
 
         $selectedIds = $validated['template_ids'] ?? [];
@@ -178,8 +243,9 @@ class AdminEventController extends Controller
     public function edit(Event $event): View
     {
         $weeks = PlanningWeek::orderBy('week_start', 'desc')->get();
+        $scheduleCategories = ScheduleCategory::options();
 
-        return view('admin.events.edit', compact('event', 'weeks'));
+        return view('admin.events.edit', compact('event', 'weeks', 'scheduleCategories'));
     }
 
     public function update(Request $request, Event $event): RedirectResponse
@@ -192,9 +258,13 @@ class AdminEventController extends Controller
             'event_time' => ['nullable', 'date_format:H:i'],
             'venue' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
+            ...$this->scheduleFieldRules(),
         ]);
 
-        $event->update($validated);
+        $event->update([
+            ...$validated,
+            ...$this->scheduleAttributes($validated),
+        ]);
 
         return redirect()->route('admin.events.show', $event)
             ->with('success', 'Event updated.');
@@ -225,7 +295,7 @@ class AdminEventController extends Controller
 
         $priority = $validated['priority'] ?? Priority::Medium->value;
 
-        Requirement::create([
+        $requirement = Requirement::create([
             'event_id' => $event->id,
             'department_id' => $validated['department_id'],
             'description' => $validated['description'],
@@ -233,6 +303,14 @@ class AdminEventController extends Controller
             'deadline' => $validated['deadline'] ?? null,
             'responsible_officer' => $validated['responsible_officer'] ?? null,
             'is_completed' => false,
+        ]);
+
+        AuditLog::create([
+            'user_id' => Auth::id(),
+            'event_id' => $event->id,
+            'requirement_id' => $requirement->id,
+            'action' => 'created',
+            'new_values' => $requirement->only(['description', 'priority', 'deadline', 'responsible_officer']),
         ]);
 
         // Save to template library so future events of this type inherit it
@@ -245,6 +323,15 @@ class AdminEventController extends Controller
     public function removeRequirement(Event $event, Requirement $requirement): RedirectResponse
     {
         abort_unless($requirement->event_id === $event->id, 404);
+
+        AuditLog::create([
+            'user_id' => Auth::id(),
+            'event_id' => $event->id,
+            'requirement_id' => $requirement->id,
+            'action' => 'deleted',
+            'old_values' => $requirement->only(['description', 'priority', 'deadline', 'responsible_officer', 'is_completed']),
+        ]);
+
         $requirement->delete();
 
         return back()->with('success', 'Requirement removed.');

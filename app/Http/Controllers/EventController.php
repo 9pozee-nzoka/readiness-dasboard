@@ -2,20 +2,22 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Priority;
 use App\Models\Department;
 use App\Models\Event;
 use App\Models\PlanningWeek;
-use App\Models\Requirement;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class EventController extends Controller
 {
-    public function show(Event $event): \Illuminate\View\View
+    public function show(Event $event): View
     {
         $user = Auth::user();
-        $event->load(['planningWeek', 'requirements.department']);
+        $event->load(['planningWeek', 'requirements.department', 'deliberations']);
 
         $priorityFilter = request()->string('priority')->value();
 
@@ -33,38 +35,77 @@ class EventController extends Controller
                 ->values();
 
             // Always use full set for percentage calculations
-            $allReqs   = $event->requirements->where('department_id', $dept->id);
-            $total     = $allReqs->count();
+            $allReqs = $event->requirements->where('department_id', $dept->id);
+            $total = $allReqs->count();
             $completed = $allReqs->where('is_completed', true)->count();
             $percentage = $total > 0 ? (int) round(($completed / $total) * 100) : 0;
 
             // Weighted
-            $totalW     = $allReqs->sum(fn ($r) => $r->priority->weight());
+            $totalW = $allReqs->sum(fn ($r) => $r->priority->weight());
             $completedW = $allReqs->where('is_completed', true)->sum(fn ($r) => $r->priority->weight());
-            $weighted   = $totalW > 0 ? (int) round(($completedW / $totalW) * 100) : 0;
+            $weighted = $totalW > 0 ? (int) round(($completedW / $totalW) * 100) : 0;
 
             // Critical pending count for this dept
             $criticalPending = $allReqs->where('priority.value', 'critical')->where('is_completed', false)->count();
 
             return [
-                'department'      => $dept,
-                'requirements'    => $requirements,
-                'total'           => $total,
-                'completed'       => $completed,
-                'percentage'      => $percentage,
-                'weighted'        => $weighted,
+                'department' => $dept,
+                'requirements' => $requirements,
+                'total' => $total,
+                'completed' => $completed,
+                'percentage' => $percentage,
+                'weighted' => $weighted,
                 'criticalPending' => $criticalPending,
-                'status'          => Department::ragStatus($percentage),
-                'classes'         => Department::ragClasses($percentage),
+                'status' => Department::ragStatus($percentage),
+                'classes' => Department::ragClasses($percentage),
             ];
         })->filter(fn ($d) => $d['total'] > 0)->values();
 
-        $priorities = \App\Enums\Priority::cases();
+        $priorities = Priority::cases();
 
         return view('events.show', compact('event', 'departmentReadiness', 'priorities', 'priorityFilter'));
     }
 
-    public function create(): \Illuminate\View\View
+    public function printReport(Event $event): View
+    {
+        $event->load(['planningWeek', 'requirements.department']);
+
+        $departments = Department::where('is_active', true)->orderBy('name')->get();
+
+        $departmentReadiness = $departments->map(function (Department $dept) use ($event) {
+            $requirements = $event->requirements
+                ->where('department_id', $dept->id)
+                ->sortBy(fn ($r) => $r->priority->sortOrder())
+                ->values();
+
+            $allReqs = $event->requirements->where('department_id', $dept->id);
+            $total = $allReqs->count();
+            $completed = $allReqs->where('is_completed', true)->count();
+            $percentage = $total > 0 ? (int) round(($completed / $total) * 100) : 0;
+
+            $totalW = $allReqs->sum(fn ($r) => $r->priority->weight());
+            $completedW = $allReqs->where('is_completed', true)->sum(fn ($r) => $r->priority->weight());
+            $weighted = $totalW > 0 ? (int) round(($completedW / $totalW) * 100) : 0;
+
+            $criticalPending = $allReqs->where('priority.value', 'critical')->where('is_completed', false)->count();
+
+            return [
+                'department' => $dept,
+                'requirements' => $requirements,
+                'total' => $total,
+                'completed' => $completed,
+                'percentage' => $percentage,
+                'weighted' => $weighted,
+                'criticalPending' => $criticalPending,
+                'status' => Department::ragStatus($percentage),
+                'classes' => Department::ragClasses($percentage),
+            ];
+        })->filter(fn ($d) => $d['total'] > 0)->values();
+
+        return view('events.print-report', compact('event', 'departmentReadiness'));
+    }
+
+    public function create(): View
     {
         abort_unless(Auth::user()->canManageEvents(), 403);
 
@@ -74,39 +115,27 @@ class EventController extends Controller
         return view('events.create', compact('weeks', 'departments'));
     }
 
-    public function store(Request $request): \Illuminate\Http\RedirectResponse
+    public function store(Request $request): RedirectResponse
     {
         abort_unless(Auth::user()->canManageEvents(), 403);
 
         $validated = $request->validate([
             'planning_week_id' => ['required', 'exists:planning_weeks,id'],
-            'name'             => ['required', 'string', 'max:255'],
-            'type'             => ['required', 'string', 'max:100'],
-            'event_date'       => ['required', 'date'],
-            'event_time'       => ['nullable', 'date_format:H:i'],
-            'venue'            => ['nullable', 'string', 'max:255'],
-            'description'      => ['nullable', 'string'],
+            'name' => ['required', 'string', 'max:255'],
+            'type' => ['required', 'string', 'max:100'],
+            'event_date' => ['required', 'date'],
+            'event_time' => ['nullable', 'date_format:H:i'],
+            'venue' => ['nullable', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
         ]);
 
         $event = Event::create($validated);
 
-        // Auto-create requirement slots for all active departments
-        $departments = Department::where('is_active', true)->get();
-        foreach ($departments as $dept) {
-            Requirement::create([
-                'event_id'            => $event->id,
-                'department_id'       => $dept->id,
-                'description'         => 'Prepare department readiness report',
-                'is_completed'        => false,
-                'responsible_officer' => $dept->head_name,
-            ]);
-        }
-
-        return redirect()->route('events.show', $event)
-            ->with('success', 'Event created successfully.');
+        return redirect()->route('admin.events.show', $event)
+            ->with('success', 'Event created. Add department requirements from the admin event page.');
     }
 
-    public function edit(Event $event): \Illuminate\View\View
+    public function edit(Event $event): View
     {
         abort_unless(Auth::user()->canManageEvents(), 403);
 
@@ -115,18 +144,18 @@ class EventController extends Controller
         return view('events.edit', compact('event', 'weeks'));
     }
 
-    public function update(Request $request, Event $event): \Illuminate\Http\RedirectResponse
+    public function update(Request $request, Event $event): RedirectResponse
     {
         abort_unless(Auth::user()->canManageEvents(), 403);
 
         $validated = $request->validate([
             'planning_week_id' => ['required', 'exists:planning_weeks,id'],
-            'name'             => ['required', 'string', 'max:255'],
-            'type'             => ['required', 'string', 'max:100'],
-            'event_date'       => ['required', 'date'],
-            'event_time'       => ['nullable', 'date_format:H:i'],
-            'venue'            => ['nullable', 'string', 'max:255'],
-            'description'      => ['nullable', 'string'],
+            'name' => ['required', 'string', 'max:255'],
+            'type' => ['required', 'string', 'max:100'],
+            'event_date' => ['required', 'date'],
+            'event_time' => ['nullable', 'date_format:H:i'],
+            'venue' => ['nullable', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
         ]);
 
         $event->update($validated);
@@ -135,7 +164,7 @@ class EventController extends Controller
             ->with('success', 'Event updated successfully.');
     }
 
-    public function destroy(Event $event): \Illuminate\Http\RedirectResponse
+    public function destroy(Event $event): RedirectResponse
     {
         abort_unless(Auth::user()->canManageEvents(), 403);
 

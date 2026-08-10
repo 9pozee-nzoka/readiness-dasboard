@@ -1,4 +1,4 @@
-@props(['weeks', 'event' => null])
+@props(['weeks', 'event' => null, 'scheduleCategories' => []])
 
 {{-- Planning Week --}}
 <div>
@@ -79,6 +79,10 @@
         placeholder="e.g. Main Boardroom"
         class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
 </div>
+
+@if (! empty($scheduleCategories))
+    <x-schedule-fields :event="$event" :schedule-categories="$scheduleCategories" />
+@endif
 
 {{-- Description --}}
 <div>

@@ -6,6 +6,8 @@ use App\Enums\UserRole;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -35,10 +37,10 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'password'          => 'hashed',
-            'role'              => UserRole::class,
-            'is_approved'       => 'boolean',
-            'approved_at'       => 'datetime',
+            'password' => 'hashed',
+            'role' => UserRole::class,
+            'is_approved' => 'boolean',
+            'approved_at' => 'datetime',
         ];
     }
 
@@ -54,6 +56,23 @@ class User extends Authenticatable
         return $this->belongsTo(User::class, 'approved_by');
     }
 
+    public function assignedRequirements(): HasMany
+    {
+        return $this->hasMany(Requirement::class, 'assigned_to');
+    }
+
+    public function directedDeliberations(): BelongsToMany
+    {
+        return $this->belongsToMany(Deliberation::class, 'deliberation_participant')
+            ->withPivot(['approved_at', 'rejected_at', 'notes', 'created_at'])
+            ->withTimestamps();
+    }
+
+    public function ownedRisks(): HasMany
+    {
+        return $this->hasMany(Risk::class, 'owner_id');
+    }
+
     // ── Approval helpers ──────────────────────────────────────────
 
     public function isPending(): bool
@@ -64,7 +83,7 @@ class User extends Authenticatable
     public function approve(User $admin, UserRole $assignedRole): void
     {
         $this->update([
-            'role'        => $assignedRole,
+            'role' => $assignedRole,
             'is_approved' => true,
             'approved_at' => now(),
             'approved_by' => $admin->id,

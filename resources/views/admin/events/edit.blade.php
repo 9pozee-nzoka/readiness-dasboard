@@ -6,7 +6,7 @@
             <h2 class="font-semibold text-gray-900 mb-5">Edit Event</h2>
             <form method="POST" action="{{ route('admin.events.update', $event) }}" class="space-y-5">
                 @csrf @method('PUT')
-                <x-event-form :weeks="$weeks" :event="$event" />
+                <x-event-form :weeks="$weeks" :event="$event" :schedule-categories="$scheduleCategories" />
                 <div class="flex items-center gap-3 pt-2">
                     <button type="submit"
                         class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm px-5 py-2.5 rounded-lg transition-colors">
