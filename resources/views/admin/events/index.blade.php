@@ -16,39 +16,36 @@
     </div>
 
     {{-- Search & Filter --}}
-    <form method="GET" id="filter-form" class="mb-5 flex flex-wrap items-end gap-3">
+    <form method="GET" id="filter-form" class="mb-5">
         <input type="hidden" name="week" value="{{ $selectedWeek?->id }}">
-
-        <div class="flex-1 min-w-48">
-            <label for="search" class="block text-xs font-medium text-gray-500 mb-1">Search</label>
-            <input type="text" name="search" id="search" value="{{ $search }}"
-                placeholder="Event name..."
-                class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
+            <div>
+                <label for="search" class="block text-xs font-medium text-gray-500 mb-1">Search</label>
+                <input type="text" name="search" id="search" value="{{ $search }}"
+                    placeholder="Event name…"
+                    class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+            </div>
+            <div>
+                <label for="type" class="block text-xs font-medium text-gray-500 mb-1">Type</label>
+                <select name="type" id="type"
+                    class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                    <option value="">All Types</option>
+                    @foreach ($eventTypes as $et)
+                        <option value="{{ $et }}" @selected($et === $type)>{{ $et }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
+                <label for="date_from" class="block text-xs font-medium text-gray-500 mb-1">From</label>
+                <input type="date" name="date_from" id="date_from" value="{{ $dateFrom?->format('Y-m-d') }}"
+                    class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+            </div>
+            <div>
+                <label for="date_to" class="block text-xs font-medium text-gray-500 mb-1">To</label>
+                <input type="date" name="date_to" id="date_to" value="{{ $dateTo?->format('Y-m-d') }}"
+                    class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+            </div>
         </div>
-
-        <div>
-            <label for="type" class="block text-xs font-medium text-gray-500 mb-1">Type</label>
-            <select name="type" id="type"
-                class="text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500">
-                <option value="">All Types</option>
-                @foreach ($eventTypes as $et)
-                    <option value="{{ $et }}" @selected($et === $type)>{{ $et }}</option>
-                @endforeach
-            </select>
-        </div>
-
-        <div>
-            <label for="date_from" class="block text-xs font-medium text-gray-500 mb-1">From</label>
-            <input type="date" name="date_from" id="date_from" value="{{ $dateFrom?->format('Y-m-d') }}"
-                class="text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500">
-        </div>
-
-        <div>
-            <label for="date_to" class="block text-xs font-medium text-gray-500 mb-1">To</label>
-            <input type="date" name="date_to" id="date_to" value="{{ $dateTo?->format('Y-m-d') }}"
-                class="text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500">
-        </div>
-
         <div class="flex gap-2">
             <button type="submit"
                 class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">

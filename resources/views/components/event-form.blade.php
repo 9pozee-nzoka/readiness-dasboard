@@ -53,7 +53,7 @@
 </div>
 
 {{-- Date & Time --}}
-<div class="grid grid-cols-2 gap-4">
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
     <div>
         <label for="event_date" class="block text-sm font-medium text-gray-700 mb-1">Date <span class="text-red-500">*</span></label>
         <input type="date" name="event_date" id="event_date"
