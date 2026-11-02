@@ -263,6 +263,73 @@
                 </button>
             </div>
 
+            {{-- ── Step 4: Accommodation Bookings ────────────────────── --}}
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+                <h2 class="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center font-bold">4</span>
+                    Accommodation Bookings
+                    <span class="text-xs font-normal text-gray-500">— book rooms for residential participants</span>
+                </h2>
+
+                <div class="space-y-3 mb-4">
+                    @foreach ($hostels as $hostel)
+                        <div class="border border-gray-200 rounded-lg p-4 hover:border-indigo-300 transition-colors">
+                            <div class="flex items-center justify-between mb-3">
+                                <div>
+                                    <h4 class="font-medium text-gray-900">{{ $hostel->name }}</h4>
+                                    <p class="text-xs text-gray-500">
+                                        {{ $hostel->residency_type }} • Capacity: {{ $hostel->capacity }} rooms
+                                    </p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-sm font-semibold text-indigo-600" id="available-{{ $hostel->id }}">
+                                        {{ $hostel->capacity }} available
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div class="hidden">
+                                    <input type="hidden" name="accommodation_bookings[{{ $loop->index }}][hostel_id]" value="{{ $hostel->id }}">
+                                    <input type="hidden" name="accommodation_bookings[{{ $loop->index }}][residency_type]" value="{{ $hostel->residency_type }}">
+                                </div>
+
+                                <div>
+                                    <label for="rooms_{{ $hostel->id }}" class="block text-xs font-medium text-gray-700 mb-1">Rooms to Book</label>
+                                    <input type="number" 
+                                        name="accommodation_bookings[{{ $loop->index }}][rooms_booked]"
+                                        id="rooms_{{ $hostel->id }}"
+                                        min="0"
+                                        max="{{ $hostel->capacity }}"
+                                        value="0"
+                                        placeholder="0"
+                                        class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                                        oninput="updateAvailability({{ $hostel->id }}, {{ $hostel->capacity }}, this.value)">
+                                </div>
+
+                                <div class="sm:col-span-2">
+                                    <label for="notes_{{ $hostel->id }}" class="block text-xs font-medium text-gray-700 mb-1">Notes (optional)</label>
+                                    <input type="text"
+                                        name="accommodation_bookings[{{ $loop->index }}][notes]"
+                                        id="notes_{{ $hostel->id }}"
+                                        placeholder="Special requirements..."
+                                        class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                </div>
+                            </div>
+
+                            <div class="mt-2 text-xs text-amber-600" id="warning-{{ $hostel->id }}" style="display: none;">
+                                ⚠️ Booking exceeds capacity - outsourcing may be required
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
+                    <p class="font-medium">💡 Tip:</p>
+                    <p class="text-xs mt-1">Remaining room capacity after bookings will be logged to help determine outsourcing needs.</p>
+                </div>
+            </div>
+
             {{-- Submit --}}
             <div class="flex items-center gap-3">
                 <button type="submit"
@@ -291,9 +358,111 @@
                 customRows: [],
 
                 init() {
+                    // Restore from localStorage if available
+                    this.restoreFormData();
+                    
                     if (this.selectedType && this.selectedType !== '__custom__') {
                         this.loadTemplates();
                     }
+
+                    // Save form data on input
+                    this.setupAutoSave();
+                },
+
+                restoreFormData() {
+                    const saved = localStorage.getItem('eventFormData');
+                    if (!saved) return;
+
+                    try {
+                        const data = JSON.parse(saved);
+                        
+                        // Restore form fields
+                        if (data.planning_week_id) document.getElementById('planning_week_id').value = data.planning_week_id;
+                        if (data.name) document.getElementById('name').value = data.name;
+                        if (data.type) {
+                            this.selectedType = data.type;
+                            document.getElementById('type').value = data.type;
+                        }
+                        if (data.event_date) document.getElementById('event_date').value = data.event_date;
+                        if (data.event_time) document.getElementById('event_time').value = data.event_time;
+                        if (data.venue) document.getElementById('venue').value = data.venue;
+                        if (data.description) document.getElementById('description').value = data.description;
+                        
+                        // Restore selected templates and priorities
+                        if (data.selectedIds) this.selectedIds = data.selectedIds;
+                        if (data.templatePriorities) this.templatePriorities = data.templatePriorities;
+                        
+                        // Restore custom rows
+                        if (data.customRows && data.customRows.length > 0) {
+                            this.customRows = data.customRows;
+                            // Use setTimeout to ensure DOM is ready
+                            setTimeout(() => {
+                                data.customRows.forEach((row, index) => {
+                                    if (row.description) {
+                                        const desc = document.querySelector(`[name="custom_reqs[${index}][description]"]`);
+                                        if (desc) desc.value = row.description;
+                                    }
+                                    if (row.department_id) {
+                                        const dept = document.querySelector(`[name="custom_reqs[${index}][department_id]"]`);
+                                        if (dept) dept.value = row.department_id;
+                                    }
+                                    if (row.priority) {
+                                        const priority = document.querySelector(`[name="custom_reqs[${index}][priority]"]`);
+                                        if (priority) priority.value = row.priority;
+                                    }
+                                    if (row.deadline) {
+                                        const deadline = document.querySelector(`[name="custom_reqs[${index}][deadline]"]`);
+                                        if (deadline) deadline.value = row.deadline;
+                                    }
+                                    if (row.officer) {
+                                        const officer = document.querySelector(`[name="custom_reqs[${index}][officer]"]`);
+                                        if (officer) officer.value = row.officer;
+                                    }
+                                });
+                            }, 100);
+                        }
+
+                        console.log('✅ Form data restored from localStorage');
+                    } catch (e) {
+                        console.error('Error restoring form data:', e);
+                    }
+                },
+
+                setupAutoSave() {
+                    const form = document.getElementById('event-form');
+                    if (!form) return;
+
+                    // Save on input/change
+                    form.addEventListener('input', () => this.saveFormData());
+                    form.addEventListener('change', () => this.saveFormData());
+
+                    // Clear saved data on successful submission
+                    form.addEventListener('submit', () => {
+                        localStorage.removeItem('eventFormData');
+                    });
+                },
+
+                saveFormData() {
+                    const data = {
+                        planning_week_id: document.getElementById('planning_week_id')?.value,
+                        name: document.getElementById('name')?.value,
+                        type: this.selectedType,
+                        event_date: document.getElementById('event_date')?.value,
+                        event_time: document.getElementById('event_time')?.value,
+                        venue: document.getElementById('venue')?.value,
+                        description: document.getElementById('description')?.value,
+                        selectedIds: this.selectedIds,
+                        templatePriorities: this.templatePriorities,
+                        customRows: this.customRows.map((row, index) => ({
+                            description: document.querySelector(`[name="custom_reqs[${index}][description]"]`)?.value,
+                            department_id: document.querySelector(`[name="custom_reqs[${index}][department_id]"]`)?.value,
+                            priority: document.querySelector(`[name="custom_reqs[${index}][priority]"]`)?.value,
+                            deadline: document.querySelector(`[name="custom_reqs[${index}][deadline]"]`)?.value,
+                            officer: document.querySelector(`[name="custom_reqs[${index}][officer]"]`)?.value,
+                        })),
+                    };
+
+                    localStorage.setItem('eventFormData', JSON.stringify(data));
                 },
 
                 loadTemplates() {
@@ -301,23 +470,26 @@
                     if (!type || type === '__custom__') {
                         this.currentTemplates = {};
                         this.hasTemplates = false;
-                        this.selectedIds = [];
-                        this.templatePriorities = {};
+                        // Don't clear selectedIds here - let user keep their selections
                         return;
                     }
                     const raw = allTemplates[type] || {};
                     this.currentTemplates = raw;
                     this.hasTemplates = Object.keys(raw).length > 0;
 
-                    // Auto-select all and pre-fill priorities from template defaults
-                    this.selectedIds = [];
-                    this.templatePriorities = {};
-                    Object.values(raw).forEach(items => {
-                        items.forEach(t => {
-                            this.selectedIds.push(t.id);
-                            this.templatePriorities[t.id] = t.priority;
+                    // Only auto-select if no saved data exists
+                    const saved = localStorage.getItem('eventFormData');
+                    if (!saved || !JSON.parse(saved).selectedIds) {
+                        // Auto-select all and pre-fill priorities from template defaults
+                        this.selectedIds = [];
+                        this.templatePriorities = {};
+                        Object.values(raw).forEach(items => {
+                            items.forEach(t => {
+                                this.selectedIds.push(t.id);
+                                this.templatePriorities[t.id] = t.priority;
+                            });
                         });
-                    });
+                    }
                 },
 
                 toggleTemplate(id) {
@@ -327,6 +499,7 @@
                     } else {
                         this.selectedIds.splice(idx, 1);
                     }
+                    this.saveFormData(); // Save immediately when toggling
                 },
 
                 selectAll() {
@@ -334,21 +507,50 @@
                     Object.values(this.currentTemplates).forEach(items => {
                         items.forEach(t => this.selectedIds.push(t.id));
                     });
+                    this.saveFormData();
                 },
 
                 deselectAll() {
                     this.selectedIds = [];
+                    this.saveFormData();
                 },
 
                 addCustomRow() {
                     this.customRows.push({});
+                    this.saveFormData();
                 },
 
                 removeCustomRow(index) {
                     this.customRows.splice(index, 1);
+                    this.saveFormData();
                 },
             };
         }
+
+        function updateAvailability(hostelId, capacity, roomsBooked) {
+            const rooms = parseInt(roomsBooked) || 0;
+            const available = capacity - rooms;
+            const availableEl = document.getElementById(`available-${hostelId}`);
+            const warningEl = document.getElementById(`warning-${hostelId}`);
+
+            if (availableEl) {
+                availableEl.textContent = `${Math.max(0, available)} available`;
+                availableEl.className = available < 0 
+                    ? 'text-sm font-semibold text-red-600' 
+                    : 'text-sm font-semibold text-indigo-600';
+            }
+
+            if (warningEl) {
+                warningEl.style.display = available < 0 ? 'block' : 'none';
+            }
+        }
+
+        // Add clear saved data button (optional - for testing/debugging)
+        window.clearEventFormData = function() {
+            localStorage.removeItem('eventFormData');
+            console.log('✅ Saved form data cleared');
+            location.reload();
+        };
     </script>
     @endpush
 </x-layouts.admin>

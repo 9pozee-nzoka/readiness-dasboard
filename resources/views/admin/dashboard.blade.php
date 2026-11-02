@@ -110,49 +110,5 @@
                 </div>
             @endif
         </div>
-
-        {{-- Pending Deliberations --}}
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="font-semibold text-gray-900">Pending Decisions</h2>
-                @if ($overdueDeliberations > 0)
-                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">
-                        {{ $overdueDeliberations }} overdue
-                    </span>
-                @endif
-            </div>
-            @if ($pendingDeliberations->isEmpty())
-                <p class="text-sm text-gray-400 text-center py-6">No pending deliberations</p>
-            @else
-                <div class="space-y-3">
-                    @foreach ($pendingDeliberations as $delib)
-                        @php $isOverdue = $delib->isOverdue(); @endphp
-                        <a href="{{ route('deliberations.show', [$delib->event, $delib]) }}"
-                            class="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group">
-                            <div class="w-2 h-2 rounded-full shrink-0 mt-1.5
-                                {{ match($delib->status->value) {
-                                    'escalated' => 'bg-red-500',
-                                    default => match($delib->impact_level) {
-                                        'critical' => 'bg-red-500',
-                                        'medium' => 'bg-amber-400',
-                                        'low' => 'bg-gray-400',
-                                        default => 'bg-gray-400',
-                                    },
-                                } }}">
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-sm font-medium text-gray-900 truncate group-hover:text-indigo-600">{{ $delib->title }}</p>
-                                <p class="text-xs text-gray-400 mt-0.5">{{ $delib->event->name }}</p>
-                                @if ($delib->decision_due_date)
-                                    <p class="text-xs {{ $isOverdue ? 'text-red-600 font-semibold' : 'text-gray-400' }} mt-0.5">
-                                        Due {{ $delib->decision_due_date->format('d M Y') }}{{ $isOverdue ? ' (OVERDUE)' : '' }}
-                                    </p>
-                                @endif
-                            </div>
-                        </a>
-                    @endforeach
-                </div>
-            @endif
-        </div>
     </div>
 </x-layouts.admin>

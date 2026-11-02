@@ -3,9 +3,9 @@
 namespace App\Console\Commands;
 
 use App\Enums\Priority;
+use App\Models\Notification;
 use App\Models\Requirement;
 use App\Models\User;
-use App\Notifications\IncompleteTasksReminderNotification;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -33,22 +33,26 @@ class EscalateOverdueRequirements extends Command
 
             // Notify all admins
             User::where('role', 'admin')->each(function (User $admin) use ($req) {
-                $admin->notify(new IncompleteTasksReminderNotification(
-                    event: $req->event,
-                    department: $req->department,
-                    incompleteRequirements: collect([$req]),
-                    sentBy: User::where('role', 'admin')->first(),
-                ));
+                Notification::notify(
+                    $admin->id,
+                    Notification::TYPE_ESCALATED,
+                    "Critical requirement overdue: {$req->description} ({$req->event->name})",
+                    route('events.show', $req->event_id),
+                    $req->event_id,
+                    $req->id
+                );
             });
 
             // Notify director
             User::where('role', 'director')->each(function (User $director) use ($req) {
-                $director->notify(new IncompleteTasksReminderNotification(
-                    event: $req->event,
-                    department: $req->department,
-                    incompleteRequirements: collect([$req]),
-                    sentBy: User::where('role', 'admin')->first(),
-                ));
+                Notification::notify(
+                    $director->id,
+                    Notification::TYPE_ESCALATED,
+                    "Critical requirement overdue: {$req->description} ({$req->event->name})",
+                    route('events.show', $req->event_id),
+                    $req->event_id,
+                    $req->id
+                );
             });
 
             $escalated++;
@@ -70,12 +74,14 @@ class EscalateOverdueRequirements extends Command
             User::where('role', 'hod')
                 ->where('department_id', $req->department_id)
                 ->each(function (User $hod) use ($req) {
-                    $hod->notify(new IncompleteTasksReminderNotification(
-                        event: $req->event,
-                        department: $req->department,
-                        incompleteRequirements: collect([$req]),
-                        sentBy: User::where('role', 'admin')->first(),
-                    ));
+                    Notification::notify(
+                        $hod->id,
+                        Notification::TYPE_ESCALATED,
+                        "High priority requirement overdue: {$req->description} ({$req->event->name})",
+                        route('events.show', $req->event_id),
+                        $req->event_id,
+                        $req->id
+                    );
                 });
 
             $escalated++;

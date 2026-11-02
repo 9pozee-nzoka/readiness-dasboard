@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Enums\Priority;
 use App\Models\Department;
 use App\Models\Event;
+use App\Models\Notification;
+use App\Models\OutsourcedService;
 use App\Models\PlanningWeek;
 use App\Models\Requirement;
 use Illuminate\Http\Request;
@@ -97,6 +99,27 @@ class DashboardController extends Controller
         int $totalEvents, int $fullyReady, int $inProgress, int $notStarted,
         int $averageReadiness, $criticalAlerts, int $overdueCount,
     ): View {
+        // Outsourced services statistics
+        $outsourcedStats = [
+            'total' => OutsourcedService::whereIn('event_id', $events->pluck('id'))->count(),
+            'pending' => OutsourcedService::whereIn('event_id', $events->pluck('id'))
+                ->where('approval_status', OutsourcedService::APPROVAL_PENDING)
+                ->count(),
+            'active' => OutsourcedService::whereIn('event_id', $events->pluck('id'))
+                ->active()
+                ->count(),
+        ];
+
+        // Notifications for director
+        $user = Auth::user();
+        $recentNotifications = Notification::where('user_id', $user->id)
+            ->latest()
+            ->limit(10)
+            ->get();
+        $unreadNotifications = Notification::where('user_id', $user->id)
+            ->whereNull('read_at')
+            ->count();
+
         // Department readiness across all events this week
         $deptReadiness = $departments->map(function (Department $dept) use ($events) {
             $allReqs = collect();
@@ -194,6 +217,7 @@ class DashboardController extends Controller
             'averageReadiness', 'criticalAlerts', 'overdueCount',
             'atRiskEvents', 'totalReqs', 'completedReqs', 'completionRate',
             'criticalTotal', 'criticalDone',
+            'outsourcedStats', 'recentNotifications', 'unreadNotifications',
         ));
     }
 }

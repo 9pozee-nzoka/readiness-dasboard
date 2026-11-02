@@ -4,13 +4,19 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\Priority;
 use App\Enums\ScheduleCategory;
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Department;
 use App\Models\Event;
+use App\Models\EventAccommodation;
 use App\Models\EventTypeRequirement;
+use App\Models\Hostel;
+use App\Models\Notification;
 use App\Models\PlanningWeek;
 use App\Models\Requirement;
+use App\Models\User;
+use App\Models\WeeklyAccommodation;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -64,6 +70,7 @@ class AdminEventController extends Controller
             ?: PlanningWeek::where('is_current', true)->value('id');
         $departments = Department::where('is_active', true)->orderBy('name')->get();
         $scheduleCategories = ScheduleCategory::options();
+        $hostels = Hostel::where('is_active', true)->orderBy('display_order')->orderBy('name')->get();
 
         // All distinct event types that have templates, plus any existing event types
         $templateTypes = EventTypeRequirement::distinct()->orderBy('event_type')->pluck('event_type');
@@ -87,6 +94,7 @@ class AdminEventController extends Controller
             'eventTypes',
             'allTemplates',
             'scheduleCategories',
+            'hostels',
         ));
     }
 
@@ -152,6 +160,12 @@ class AdminEventController extends Controller
             'custom_reqs.*.priority' => ['nullable', Rule::enum(Priority::class)],
             'custom_reqs.*.deadline' => ['nullable', 'date'],
             'custom_reqs.*.officer' => ['nullable', 'string', 'max:255'],
+            // Accommodation bookings
+            'accommodation_bookings' => ['nullable', 'array'],
+            'accommodation_bookings.*.hostel_id' => ['required_with:accommodation_bookings', 'exists:hostels,id'],
+            'accommodation_bookings.*.residency_type' => ['required_with:accommodation_bookings', 'string', 'in:Executive,Deluxe,Standard'],
+            'accommodation_bookings.*.rooms_booked' => ['required_with:accommodation_bookings', 'integer', 'min:0'],
+            'accommodation_bookings.*.notes' => ['nullable', 'string', 'max:500'],
         ]);
 
         $event = Event::create([
@@ -219,13 +233,77 @@ class AdminEventController extends Controller
             );
         }
 
+        // Handle accommodation bookings and track remaining rooms
+        foreach ($validated['accommodation_bookings'] ?? [] as $booking) {
+            if (empty($booking['rooms_booked']) || $booking['rooms_booked'] <= 0) {
+                continue;
+            }
+
+            $hostel = Hostel::find($booking['hostel_id']);
+            $planningWeek = $event->planningWeek;
+
+            // Get or create weekly accommodation record
+            $weeklyAccommodation = WeeklyAccommodation::firstOrCreate(
+                [
+                    'planning_week_id' => $planningWeek->id,
+                    'hostel_id' => $hostel->id,
+                ],
+                [
+                    'occupancy' => 0,
+                    'rooms_out_of_order' => 0,
+                ]
+            );
+
+            // Calculate available rooms before booking
+            $availableBeforeBooking = $hostel->capacity - $weeklyAccommodation->occupancy - $weeklyAccommodation->rooms_out_of_order;
+
+            // Update occupancy
+            $weeklyAccommodation->occupancy += $booking['rooms_booked'];
+            $weeklyAccommodation->save();
+
+            // Calculate available rooms after booking
+            $availableAfterBooking = $hostel->capacity - $weeklyAccommodation->occupancy - $weeklyAccommodation->rooms_out_of_order;
+
+            // Determine if outsourcing is needed
+            $requiresOutsourcing = $availableAfterBooking < 0 || $booking['rooms_booked'] > $availableBeforeBooking;
+
+            // Create event accommodation record with logging
+            EventAccommodation::create([
+                'event_id' => $event->id,
+                'hostel_id' => $hostel->id,
+                'residency_type' => $booking['residency_type'],
+                'rooms_booked' => $booking['rooms_booked'],
+                'rooms_available_after_booking' => max(0, $availableAfterBooking),
+                'requires_outsourcing' => $requiresOutsourcing,
+                'notes' => $booking['notes'] ?? null,
+            ]);
+        }
+
+        // Notify all HODs about the new event
+        $hods = User::where('role', UserRole::Hod->value)
+            ->where('is_approved', true)
+            ->get();
+
+        foreach ($hods as $hod) {
+            Notification::notify(
+                $hod->id,
+                Notification::TYPE_EVENT_CREATED,
+                Auth::user()->name." created a new event: {$event->name} on ".$event->event_date->format('d M Y'),
+                route('events.show', $event),
+                $event->id,
+                null,
+                null,
+                'New Event Created'
+            );
+        }
+
         return redirect()->route('admin.events.show', $event)
             ->with('success', 'Event created with '.$event->requirements()->count().' requirements.');
     }
 
     public function show(Event $event): View
     {
-        $event->load(['planningWeek', 'requirements.department']);
+        $event->load(['planningWeek', 'requirements.department', 'accommodations.hostel']);
         $departments = Department::where('is_active', true)->orderBy('name')->get();
 
         $departmentRequirements = $departments->map(function ($dept) use ($event) {

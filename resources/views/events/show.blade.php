@@ -108,7 +108,7 @@
         </div>
     </div>
 
-    {{-- Priority filter + Deliberations link --}}
+    {{-- Priority filter --}}
     <div class="flex flex-wrap items-center gap-2 mb-4 print:hidden">
         <span class="text-xs font-medium text-gray-500 shrink-0">Filter:</span>
         <div class="flex flex-wrap gap-1.5">
@@ -122,13 +122,6 @@
                 </a>
             @endforeach
         </div>
-        <a href="{{ route('deliberations.index', $event) }}"
-            class="sm:ml-auto inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium bg-purple-50 border border-purple-200 text-purple-700 hover:bg-purple-100 transition-colors">
-            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
-            </svg>
-            Deliberations ({{ $event->deliberations->count() }})
-        </a>
     </div>
 
     {{-- Department cards --}}
@@ -242,11 +235,23 @@
                                                    id="desc-{{ $req->id }}">
                                                     {{ $req->description }}
                                                 </p>
-                                                <x-priority-badge :priority="$req->priority" />
-                                                @if ($req->requires_deliberation)
-                                                    <a href="{{ route('deliberations.index', $event) }}" class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-purple-100 text-purple-700 border border-purple-200 hover:bg-purple-200">
-                                                        💬 Deliberation
-                                                    </a>
+                                                
+                                                {{-- Priority: editable for HODs, badge for others --}}
+                                                @if ($user->isHod() && $user->department_id === $dr['department']->id)
+                                                    <form method="POST" action="{{ route('requirements.update-priority', $req) }}" class="inline" onchange="this.submit()">
+                                                        @csrf @method('PATCH')
+                                                        <select name="priority"
+                                                            class="text-xs border rounded-lg px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-indigo-500
+                                                                {{ $pc['bg'] }} {{ $pc['text'] }} {{ $pc['border'] }}">
+                                                            @foreach (\App\Enums\Priority::cases() as $p)
+                                                                <option value="{{ $p->value }}" @selected($req->priority->value === $p->value)>
+                                                                    {{ $p->label() }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                    </form>
+                                                @else
+                                                    <x-priority-badge :priority="$req->priority" />
                                                 @endif
                                             </div>
                                             <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
@@ -271,6 +276,17 @@
 
                                     {{-- Actions row --}}
                                     <div class="flex flex-wrap items-center gap-1 print:hidden pl-0 sm:pl-0 shrink-0">
+                                        {{-- Comment button --}}
+                                        <button 
+                                            onclick="toggleCommentForm({{ $req->id }})"
+                                            class="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-2 py-1 rounded-lg transition-colors"
+                                            title="Add comment">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                                            </svg>
+                                            Comment
+                                        </button>
+
                                         @if ($user->isAdmin() || ($user->isHod() && $user->department_id === $dr['department']->id))
                                             <form method="POST" action="{{ route('requirements.assign', $req) }}" class="inline">
                                                 @csrf @method('PATCH')
@@ -294,18 +310,6 @@
                                                 <button type="submit" class="text-xs text-purple-600 hover:text-purple-800 font-bold px-1" title="Escalate">↑</button>
                                             </form>
                                         @endif
-                                        @if ($user->isAdmin() || ($user->isHod() && $user->department_id === $dr['department']->id))
-                                            <a href="{{ route('deliberations.create', ['event' => $event, 'requirement_id' => $req->id]) }}"
-                                                class="inline-flex items-center gap-0.5 text-xs font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 px-2 py-1 rounded-lg transition-colors">
-                                                💬 <span class="hidden sm:inline">Deliberate</span>
-                                            </a>
-                                        @endif
-                                        @if ($user->isEmployee() && $user->department_id === $dr['department']->id)
-                                            <a href="{{ route('deliberations.create', ['event' => $event, 'requirement_id' => $req->id, 'consult' => 1]) }}"
-                                                class="inline-flex items-center gap-0.5 text-xs font-medium text-sky-700 bg-sky-50 hover:bg-sky-100 border border-sky-200 px-2 py-1 rounded-lg transition-colors">
-                                                🙋 <span class="hidden sm:inline">Ask HOD</span>
-                                            </a>
-                                        @endif
                                         @if ($user->canManageEvents())
                                             <form method="POST" action="{{ route('requirements.destroy', $req) }}" onsubmit="return confirm('Remove?')">
                                                 @csrf @method('DELETE')
@@ -316,6 +320,63 @@
                                                 </button>
                                             </form>
                                         @endif
+                                    </div>
+
+                                    {{-- Comment Form (initially hidden) --}}
+                                    <div id="comment-form-{{ $req->id }}" class="hidden w-full mt-3 pl-0 sm:pl-6" x-data="{ submitting: false }">
+                                        <form method="POST" action="{{ route('comments.store') }}" 
+                                            @submit="submitting = true"
+                                            class="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                                            @csrf
+                                            <input type="hidden" name="commentable_type" value="App\Models\Requirement">
+                                            <input type="hidden" name="commentable_id" value="{{ $req->id }}">
+                                            
+                                            @if(Auth::user()->isHOD())
+                                                <div class="mb-2">
+                                                    <label class="block text-xs font-medium text-gray-700 mb-1">Direct this comment to:</label>
+                                                    <select name="directed_to" 
+                                                        x-data="{ recipient: 'auto' }"
+                                                        x-model="recipient"
+                                                        class="w-full text-xs border border-gray-300 rounded px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                                        <option value="auto">Auto (Director by default)</option>
+                                                        <option value="director">🎯 Director</option>
+                                                        <option value="staff">👥 My Department Staff</option>
+                                                        <option value="specific_user">👤 Specific Person</option>
+                                                    </select>
+                                                    
+                                                    <div x-show="recipient === 'specific_user'" x-cloak class="mt-2">
+                                                        <select name="directed_to_user_id" class="w-full text-xs border border-gray-300 rounded px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                                            <option value="">Select person...</option>
+                                                            @foreach(\App\Models\User::where('is_approved', true)->orderBy('name')->get() as $u)
+                                                                <option value="{{ $u->id }}">{{ $u->name }} ({{ $u->role->value }})</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            @endif
+                                            
+                                            <textarea 
+                                                name="body" 
+                                                rows="2" 
+                                                required
+                                                placeholder="Add your comment..."
+                                                class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
+                                            <div class="flex items-center justify-end gap-2 mt-2">
+                                                <button 
+                                                    type="button"
+                                                    onclick="toggleCommentForm({{ $req->id }})"
+                                                    class="text-xs text-gray-600 hover:text-gray-800 px-3 py-1.5 rounded-lg border border-gray-300 bg-white transition-colors">
+                                                    Cancel
+                                                </button>
+                                                <button 
+                                                    type="submit"
+                                                    :disabled="submitting"
+                                                    class="text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 px-3 py-1.5 rounded-lg transition-colors">
+                                                    <span x-show="!submitting">Post Comment</span>
+                                                    <span x-show="submitting" x-cloak>Posting...</span>
+                                                </button>
+                                            </div>
+                                        </form>
                                     </div>
                                 </li>
                             @endforeach
@@ -371,6 +432,18 @@
     @push('scripts')
     <script>
         const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
+        function toggleCommentForm(reqId) {
+            const form = document.getElementById(`comment-form-${reqId}`);
+            if (form) {
+                form.classList.toggle('hidden');
+                if (!form.classList.contains('hidden')) {
+                    // Focus the textarea when opening
+                    const textarea = form.querySelector('textarea');
+                    if (textarea) textarea.focus();
+                }
+            }
+        }
 
         async function updateRequirementStatus(reqId, deptId, newStatus) {
             const select = document.getElementById(`status-select-${reqId}`);

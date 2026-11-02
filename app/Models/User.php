@@ -26,6 +26,7 @@ class User extends Authenticatable
         'is_approved',
         'approved_at',
         'approved_by',
+        'whatsapp_number',
     ];
 
     protected $hidden = [
@@ -73,6 +74,14 @@ class User extends Authenticatable
         return $this->hasMany(Risk::class, 'owner_id');
     }
 
+    /**
+     * Override Notifiable trait's notifications() to use custom notifications table
+     */
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(Notification::class, 'user_id');
+    }
+
     // ── Approval helpers ──────────────────────────────────────────
 
     public function isPending(): bool
@@ -102,6 +111,11 @@ class User extends Authenticatable
         return $this->role === UserRole::Director;
     }
 
+    public function isDirectorOrAdmin(): bool
+    {
+        return $this->isDirector() || $this->isAdmin();
+    }
+
     public function isHod(): bool
     {
         return $this->role === UserRole::Hod;
@@ -110,6 +124,21 @@ class User extends Authenticatable
     public function isEmployee(): bool
     {
         return $this->role === UserRole::Employee;
+    }
+
+    public function isCourseCoordinator(): bool
+    {
+        return $this->role === UserRole::CourseCoordinator;
+    }
+
+    public function isProgrammeAssistant(): bool
+    {
+        return $this->role === UserRole::ProgrammeAssistant;
+    }
+
+    public function canCreateEvents(): bool
+    {
+        return $this->role?->canManageEvents() ?? false;
     }
 
     public function hasRole(UserRole|string $role): bool

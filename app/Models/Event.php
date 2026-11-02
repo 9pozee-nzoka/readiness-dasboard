@@ -72,11 +72,6 @@ class Event extends Model
         return $this->hasMany(Requirement::class);
     }
 
-    public function deliberations(): HasMany
-    {
-        return $this->hasMany(Deliberation::class);
-    }
-
     public function meetings(): HasMany
     {
         return $this->hasMany(Meeting::class);
@@ -102,9 +97,24 @@ class Event extends Model
         return $this->hasMany(EventAsset::class);
     }
 
+    public function accommodations(): HasMany
+    {
+        return $this->hasMany(EventAccommodation::class);
+    }
+
+    public function comments(): HasMany
+    {
+        return $this->hasMany(Comment::class);
+    }
+
+    public function outsourcedServices(): HasMany
+    {
+        return $this->hasMany(OutsourcedService::class);
+    }
+
     /**
      * Overall readiness percentage across all departments.
-     * Uses multi-stage status weights for realistic progress.
+     * Per October 2026 spec: only verified completed requirements count toward readiness.
      */
     public function overallReadiness(): int
     {
@@ -115,13 +125,15 @@ class Event extends Model
         }
 
         $totalWeight = $reqs->count();
-        $completedWeight = $reqs->sum(fn ($r) => $r->status->readinessWeight());
+        // Only count verified requirements (completed AND verified by HOD)
+        $verifiedCount = $reqs->filter(fn ($r) => $r->countsTowardReadiness())->count();
 
-        return (int) round(($completedWeight / $totalWeight) * 100);
+        return (int) round(($verifiedCount / $totalWeight) * 100);
     }
 
     /**
      * Weighted readiness — critical tasks count more.
+     * Per October 2026 spec: only verified completed requirements count toward readiness.
      */
     public function weightedReadiness(): int
     {
@@ -132,13 +144,16 @@ class Event extends Model
         }
 
         $totalWeight = $reqs->sum(fn ($r) => $r->priority->weight());
-        $completedWeight = $reqs->sum(fn ($r) => $r->priority->weight() * $r->status->readinessWeight());
+        // Only count verified requirements
+        $verifiedWeight = $reqs->filter(fn ($r) => $r->countsTowardReadiness())
+            ->sum(fn ($r) => $r->priority->weight());
 
-        return $totalWeight > 0 ? (int) round(($completedWeight / $totalWeight) * 100) : 0;
+        return $totalWeight > 0 ? (int) round(($verifiedWeight / $totalWeight) * 100) : 0;
     }
 
     /**
-     * Decision readiness — percentage of requirements that have reached Approved or Completed.
+     * Decision readiness — percentage of requirements that are completed.
+     * (Simplified from old deliberation system)
      */
     public function decisionReadiness(): int
     {
@@ -148,9 +163,9 @@ class Event extends Model
             return 0;
         }
 
-        $decided = $reqs->filter(fn ($r) => $r->status->isDecided())->count();
+        $completed = $reqs->filter(fn ($r) => $r->status->isCompleted())->count();
 
-        return (int) round(($decided / $reqs->count()) * 100);
+        return (int) round(($completed / $reqs->count()) * 100);
     }
 
     /**

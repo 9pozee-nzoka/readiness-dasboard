@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ScheduleCategory;
 use App\Models\Department;
 use App\Models\Event;
 use App\Models\PlanningWeek;
@@ -43,6 +44,47 @@ class ReportController extends Controller
         return view('reports.event', compact(
             'event', 'departmentReadiness', 'overall', 'weighted',
             'riskScore', 'criticalPending'
+        ));
+    }
+
+    /**
+     * KSG-style weekly schedule report (print / save as PDF).
+     * Mirrors the official KSG/12/WS/01 format.
+     */
+    public function weeklySchedule(Request $request): View
+    {
+        $weekId = $request->integer('week') ?: PlanningWeek::where('is_current', true)->value('id');
+        $week = PlanningWeek::findOrFail($weekId);
+
+        $events = Event::with(['planningWeek'])
+            ->where('planning_week_id', $weekId)
+            ->orderBy('event_date')
+            ->orderBy('id')
+            ->get();
+
+        $categoryOrder = [
+            ScheduleCategory::NewProgramme,
+            ScheduleCategory::Ongoing,
+            ScheduleCategory::Hosted,
+            ScheduleCategory::KsgActivity,
+            ScheduleCategory::Consultancy,
+        ];
+
+        $grouped = collect($categoryOrder)->mapWithKeys(function (ScheduleCategory $cat) use ($events) {
+            return [
+                $cat->value => $events->filter(fn ($e) => $e->schedule_category === $cat)->values(),
+            ];
+        });
+
+        $totalResidents = $events->sum('participants_residential');
+        $totalNonResidents = $events->sum('participants_non_residential');
+        $totalParticipants = $totalResidents + $totalNonResidents;
+
+        $weeks = PlanningWeek::orderByDesc('week_start')->get();
+
+        return view('reports.weekly-schedule', compact(
+            'week', 'weeks', 'grouped', 'categoryOrder',
+            'totalResidents', 'totalNonResidents', 'totalParticipants'
         ));
     }
 

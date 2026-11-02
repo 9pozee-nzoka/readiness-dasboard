@@ -52,6 +52,78 @@
         </div>
     </div>
 
+    {{-- Accommodation Bookings --}}
+    @if ($event->accommodations->isNotEmpty())
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-6">
+            <h3 class="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                </svg>
+                Accommodation Bookings
+            </h3>
+
+            <div class="space-y-3">
+                @foreach ($event->accommodations as $booking)
+                    <div class="border border-gray-200 rounded-lg p-4 {{ $booking->requires_outsourcing ? 'bg-amber-50 border-amber-300' : 'bg-white' }}">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2">
+                                    <h4 class="font-medium text-gray-900">{{ $booking->hostel->name }}</h4>
+                                    <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
+                                        {{ $booking->residency_type }}
+                                    </span>
+                                    @if ($booking->requires_outsourcing)
+                                        <span class="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-medium">
+                                            ⚠️ Outsourcing Required
+                                        </span>
+                                    @endif
+                                </div>
+                                <div class="mt-2 grid grid-cols-3 gap-4 text-sm">
+                                    <div>
+                                        <p class="text-xs text-gray-500">Rooms Booked</p>
+                                        <p class="font-semibold text-gray-900">{{ $booking->rooms_booked }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-500">Remaining After Booking</p>
+                                        <p class="font-semibold {{ $booking->rooms_available_after_booking <= 0 ? 'text-red-600' : 'text-green-600' }}">
+                                            {{ $booking->rooms_available_after_booking }} rooms
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-500">Hostel Capacity</p>
+                                        <p class="font-semibold text-gray-900">{{ $booking->hostel->capacity }} rooms</p>
+                                    </div>
+                                </div>
+                                @if ($booking->notes)
+                                    <p class="text-xs text-gray-600 mt-2">
+                                        <span class="font-medium">Note:</span> {{ $booking->notes }}
+                                    </p>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+
+            @php
+                $totalBooked = $event->accommodations->sum('rooms_booked');
+                $requiresOutsourcing = $event->accommodations->where('requires_outsourcing', true)->count() > 0;
+            @endphp
+
+            @if ($requiresOutsourcing)
+                <div class="mt-4 bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800">
+                    <p class="font-medium">⚠️ Outsourcing Alert</p>
+                    <p class="text-xs mt-1">Some bookings exceed hostel capacity. Consider outsourcing accommodation for this event.</p>
+                </div>
+            @else
+                <div class="mt-4 bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-800">
+                    <p class="font-medium">✓ Accommodation Confirmed</p>
+                    <p class="text-xs mt-1">All {{ $totalBooked }} rooms successfully booked within available capacity.</p>
+                </div>
+            @endif
+        </div>
+    @endif
+
     {{-- Department requirement cards --}}
     <div class="space-y-4">
         @foreach ($departmentRequirements as $dr)

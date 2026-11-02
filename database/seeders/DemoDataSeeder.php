@@ -5,8 +5,6 @@ namespace Database\Seeders;
 use App\Enums\Priority;
 use App\Enums\RequirementStatus;
 use App\Enums\UserRole;
-use App\Models\Deliberation;
-use App\Models\DeliberationComment;
 use App\Models\Department;
 use App\Models\Event;
 use App\Models\EventTypeRequirement;
@@ -31,11 +29,33 @@ class DemoDataSeeder extends Seeder
         $nextWeek1Start = Carbon::now()->addWeek()->startOfWeek();
         $nextWeek2Start = Carbon::now()->addWeeks(2)->startOfWeek();
 
+        // Helper to calculate financial year and week number
+        // KSG financial year runs July 1 - June 30
+        $calculateFYWeek = function (Carbon $date) {
+            $fyStartMonth = 7; // July
+            $year = $date->year;
+
+            // If we're before July, we're in FY that started last year
+            if ($date->month < $fyStartMonth) {
+                $fyStart = Carbon::create($year - 1, $fyStartMonth, 1);
+                $fy = ($year - 1).'/'.$year;
+            } else {
+                $fyStart = Carbon::create($year, $fyStartMonth, 1);
+                $fy = $year.'/'.($year + 1);
+            }
+
+            // Calculate week number (1-52)
+            $weekNumber = (int) ceil($date->diffInDays($fyStart->startOfWeek()) / 7) + 1;
+            $weekNumber = min(max($weekNumber, 1), 52); // Clamp between 1-52
+
+            return ['financial_year' => $fy, 'week_number' => $weekNumber];
+        };
+
         $weeks = [
-            ['label' => 'Week of '.$lastWeekStart->format('d M Y'), 'week_start' => $lastWeekStart->copy(), 'week_end' => $lastWeekStart->copy()->addDays(4), 'is_current' => false],
-            ['label' => 'Week of '.$currentWeekStart->format('d M Y'), 'week_start' => $currentWeekStart->copy(), 'week_end' => $currentWeekStart->copy()->addDays(4), 'is_current' => true],
-            ['label' => 'Week of '.$nextWeek1Start->format('d M Y'), 'week_start' => $nextWeek1Start->copy(), 'week_end' => $nextWeek1Start->copy()->addDays(4), 'is_current' => false],
-            ['label' => 'Week of '.$nextWeek2Start->format('d M Y'), 'week_start' => $nextWeek2Start->copy(), 'week_end' => $nextWeek2Start->copy()->addDays(4), 'is_current' => false],
+            array_merge(['label' => 'Week of '.$lastWeekStart->format('d M Y'), 'week_start' => $lastWeekStart->copy(), 'week_end' => $lastWeekStart->copy()->addDays(4), 'is_current' => false], $calculateFYWeek($lastWeekStart)),
+            array_merge(['label' => 'Week of '.$currentWeekStart->format('d M Y'), 'week_start' => $currentWeekStart->copy(), 'week_end' => $currentWeekStart->copy()->addDays(4), 'is_current' => true], $calculateFYWeek($currentWeekStart)),
+            array_merge(['label' => 'Week of '.$nextWeek1Start->format('d M Y'), 'week_start' => $nextWeek1Start->copy(), 'week_end' => $nextWeek1Start->copy()->addDays(4), 'is_current' => false], $calculateFYWeek($nextWeek1Start)),
+            array_merge(['label' => 'Week of '.$nextWeek2Start->format('d M Y'), 'week_start' => $nextWeek2Start->copy(), 'week_end' => $nextWeek2Start->copy()->addDays(4), 'is_current' => false], $calculateFYWeek($nextWeek2Start)),
         ];
 
         $planningWeeks = collect();
@@ -299,19 +319,15 @@ class DemoDataSeeder extends Seeder
         $templates = EventTypeRequirement::with('department')->get();
 
         $statuses = [
-            'not_started' => 15,
-            'in_progress' => 20,
-            'under_deliberation' => 10,
-            'awaiting_approval' => 8,
-            'approved' => 7,
-            'procurement_ongoing' => 5,
-            'blocked' => 3,
-            'escalated' => 2,
+            'not_started' => 30,
+            'in_progress' => 40,
             'completed' => 30,
         ];
 
+        $requirementsToInsert = [];
+
         foreach ($events as $event) {
-            $typeTemplates = $templates->where('event_type', $event->type);
+            $typeTemplates = $templates->where('event_type', $event->type)->take(8); // Limit to 8 templates per event
 
             foreach ($typeTemplates as $template) {
                 $statusValue = fake()->randomElement(array_keys($statuses));
@@ -325,16 +341,15 @@ class DemoDataSeeder extends Seeder
                     if ($start->greaterThan($end)) {
                         $start = $end->copy()->subDay();
                     }
-                    $completedAt = fake()->dateTimeBetween($start, $end);
+                    $completedAt = fake()->dateTimeBetween($start, $end)->format('Y-m-d H:i:s');
                 }
 
                 $hodName = $hodNames[$template->department->name] ?? fake()->name();
-                $deptStaff = $hodUsers->firstWhere('department_id', $template->department_id);
                 $employee = User::where('department_id', $template->department_id)
                     ->where('role', 'employee')
                     ->first();
 
-                Requirement::create([
+                $requirementsToInsert[] = [
                     'event_id' => $event->id,
                     'department_id' => $template->department_id,
                     'description' => $template->description,
@@ -344,16 +359,16 @@ class DemoDataSeeder extends Seeder
                     'is_completed' => $status->isCompleted(),
                     'responsible_officer' => $hodName,
                     'assigned_to' => $employee?->id,
-                    'requires_deliberation' => in_array($statusValue, ['under_deliberation', 'awaiting_approval', 'blocked']),
                     'completed_at' => $completedAt,
                     'is_escalated' => $status->isEscalated(),
-                    'escalated_at' => $status->isEscalated() ? now()->subDays(fake()->numberBetween(1, 3)) : null,
-                ]);
+                    'escalated_at' => $status->isEscalated() ? now()->subDays(fake()->numberBetween(1, 3))->format('Y-m-d H:i:s') : null,
+                    'created_at' => now()->format('Y-m-d H:i:s'),
+                    'updated_at' => now()->format('Y-m-d H:i:s'),
+                ];
             }
 
-            // Add some custom requirements for variety
-            $customCount = fake()->numberBetween(2, 5);
-            for ($i = 0; $i < $customCount; $i++) {
+            // Add 2 custom requirements per event for variety
+            for ($i = 0; $i < 2; $i++) {
                 $dept = $departments->random();
                 $priority = fake()->randomElement(Priority::cases());
                 $statusValue = fake()->randomElement(array_keys($statuses));
@@ -367,10 +382,10 @@ class DemoDataSeeder extends Seeder
                     if ($start->greaterThan($end)) {
                         $start = $end->copy()->subDay();
                     }
-                    $completedAt = fake()->dateTimeBetween($start, $end);
+                    $completedAt = fake()->dateTimeBetween($start, $end)->format('Y-m-d H:i:s');
                 }
 
-                Requirement::create([
+                $requirementsToInsert[] = [
                     'event_id' => $event->id,
                     'department_id' => $dept->id,
                     'description' => fake()->randomElement([
@@ -390,70 +405,22 @@ class DemoDataSeeder extends Seeder
                     'deadline' => $deadline,
                     'is_completed' => $status->isCompleted(),
                     'responsible_officer' => $hodNames[$dept->name] ?? fake()->name(),
+                    'assigned_to' => null,
                     'completed_at' => $completedAt,
                     'is_escalated' => $status->isEscalated(),
-                    'escalated_at' => $status->isEscalated() ? now()->subDays(fake()->numberBetween(1, 3)) : null,
-                ]);
+                    'escalated_at' => $status->isEscalated() ? now()->subDays(fake()->numberBetween(1, 3))->format('Y-m-d H:i:s') : null,
+                    'created_at' => now()->format('Y-m-d H:i:s'),
+                    'updated_at' => now()->format('Y-m-d H:i:s'),
+                ];
             }
         }
 
-        // ── 5. Deliberations ──────────────────────────────────────────
-        $this->command->info('  → Deliberations');
-        foreach ($events as $event) {
-            $delibReqs = $event->requirements
-                ->where('requires_deliberation', true)
-                ->where('status', '!=', 'completed')
-                ->take(2);
-
-            foreach ($delibReqs as $req) {
-                $delib = Deliberation::create([
-                    'event_id' => $event->id,
-                    'requirement_id' => $req->id,
-                    'title' => 'Deliberation: '.$req->description,
-                    'description' => fake()->randomElement([
-                        'Multiple stakeholders need to review before final decision.',
-                        'Budget implications require management approval.',
-                        'Vendor selection requires comparison of three quotes.',
-                        'Security assessment pending external consultant review.',
-                        'Venue capacity needs verification with facilities team.',
-                    ]),
-                    'status' => fake()->boolean(60) ? 'open' : 'closed',
-                    'decision_due_date' => fake()->dateTimeBetween('now', '+7 days')->format('Y-m-d'),
-                    'impact_level' => fake()->randomElement(['critical', 'medium', 'low']),
-                ]);
-
-                if ($delib->status === 'closed') {
-                    $delib->update([
-                        'decision_made' => true,
-                        'decision_notes' => fake()->randomElement([
-                            'Approved after review by all stakeholders.',
-                            'Decision to proceed with recommended option.',
-                            'Budget approved by finance committee.',
-                            'External consultant confirmed compliance.',
-                        ]),
-                        'approved_by' => $director->id,
-                        'approved_at' => now()->subDays(fake()->numberBetween(1, 3)),
-                    ]);
-                } else {
-                    // Add some comments to open deliberations
-                    for ($c = 0; $c < fake()->numberBetween(1, 3); $c++) {
-                        DeliberationComment::create([
-                            'deliberation_id' => $delib->id,
-                            'user_id' => $hodUsers->random()->id,
-                            'comment' => fake()->randomElement([
-                                'I recommend we proceed with option A.',
-                                'Need more information on cost implications.',
-                                'Security team has raised concerns.',
-                                'Budget is available for this requirement.',
-                                'Can we get quotes from additional vendors?',
-                            ]),
-                        ]);
-                    }
-                }
-            }
+        // Bulk insert all requirements at once
+        foreach (array_chunk($requirementsToInsert, 100) as $chunk) {
+            Requirement::insert($chunk);
         }
 
-        // ── 6. Page Visits ────────────────────────────────────────────
+        // ── 5. Page Visits ────────────────────────────────────────────
         $this->command->info('  → Page visits');
         $paths = ['/', '/events', '/admin', '/admin/events', '/admin/users', '/admin/staff'];
         $allUsers = User::where('is_approved', true)->get();

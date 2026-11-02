@@ -13,6 +13,8 @@ class PlanningWeek extends Model
 
     protected $fillable = [
         'label',
+        'financial_year',
+        'week_number',
         'week_start',
         'week_end',
         'is_current',
@@ -32,6 +34,11 @@ class PlanningWeek extends Model
     public function events(): HasMany
     {
         return $this->hasMany(Event::class);
+    }
+
+    public function weeklyAccommodation(): HasMany
+    {
+        return $this->hasMany(WeeklyAccommodation::class);
     }
 
     /**

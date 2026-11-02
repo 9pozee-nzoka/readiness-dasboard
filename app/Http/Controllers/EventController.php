@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Enums\Priority;
+use App\Enums\UserRole;
 use App\Models\Department;
 use App\Models\Event;
+use App\Models\Notification;
 use App\Models\PlanningWeek;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,7 +20,7 @@ class EventController extends Controller
     public function show(Event $event): View
     {
         $user = Auth::user();
-        $event->load(['planningWeek', 'requirements.department', 'deliberations']);
+        $event->load(['planningWeek', 'requirements.department']);
 
         $priorityFilter = request()->string('priority')->value();
 
@@ -130,6 +133,24 @@ class EventController extends Controller
         ]);
 
         $event = Event::create($validated);
+
+        // Notify all HODs about the new event
+        $hods = User::where('role', UserRole::Hod->value)
+            ->where('is_approved', true)
+            ->get();
+
+        foreach ($hods as $hod) {
+            Notification::notify(
+                $hod->id,
+                Notification::TYPE_EVENT_CREATED,
+                Auth::user()->name." created a new event: {$event->name} on ".$event->event_date->format('d M Y'),
+                route('events.show', $event),
+                $event->id,
+                null,
+                null,
+                'New Event Created'
+            );
+        }
 
         return redirect()->route('admin.events.show', $event)
             ->with('success', 'Event created. Add department requirements from the admin event page.');

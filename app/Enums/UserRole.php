@@ -4,18 +4,22 @@ namespace App\Enums;
 
 enum UserRole: string
 {
-    case Admin    = 'admin';
+    case Admin = 'admin';
     case Director = 'director';
-    case Hod      = 'hod';
+    case Hod = 'hod';
     case Employee = 'employee';
+    case CourseCoordinator = 'course_coordinator';
+    case ProgrammeAssistant = 'programme_assistant';
 
     public function label(): string
     {
         return match ($this) {
-            self::Admin    => 'Administrator',
+            self::Admin => 'Administrator',
             self::Director => 'Director',
-            self::Hod      => 'Head of Department',
+            self::Hod => 'Head of Department',
             self::Employee => 'Employee',
+            self::CourseCoordinator => 'Course Coordinator',
+            self::ProgrammeAssistant => 'Programme Assistant',
         };
     }
 
@@ -28,7 +32,7 @@ enum UserRole: string
     /** Roles that can manage events and requirements. */
     public function canManageEvents(): bool
     {
-        return $this === self::Admin;
+        return in_array($this, [self::Admin, self::CourseCoordinator, self::ProgrammeAssistant]);
     }
 
     /** Roles that can send reminders. */

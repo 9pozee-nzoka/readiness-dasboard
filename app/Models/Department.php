@@ -59,7 +59,7 @@ class Department extends Model
             return 0;
         }
 
-        $totalWeight     = $reqs->sum(fn ($r) => $r->priority->weight());
+        $totalWeight = $reqs->sum(fn ($r) => $r->priority->weight());
         $completedWeight = $reqs->where('is_completed', true)->sum(fn ($r) => $r->priority->weight());
 
         return $totalWeight > 0 ? (int) round(($completedWeight / $totalWeight) * 100) : 0;
@@ -72,8 +72,8 @@ class Department extends Model
     {
         return match (true) {
             $percentage === 100 => 'Ready',
-            $percentage > 0    => 'In Progress',
-            default            => 'Not Started',
+            $percentage > 0 => 'In Progress',
+            default => 'Not Started',
         };
     }
 
@@ -85,9 +85,9 @@ class Department extends Model
     public static function ragClasses(int $percentage): array
     {
         return match (true) {
-            $percentage === 100 => ['bg' => 'bg-green-100', 'text' => 'text-green-700', 'bar' => 'bg-green-500'],
-            $percentage > 0    => ['bg' => 'bg-amber-100', 'text' => 'text-amber-700', 'bar' => 'bg-amber-400'],
-            default            => ['bg' => 'bg-red-100', 'text' => 'text-red-700', 'bar' => 'bg-red-400'],
+            $percentage >= 80 => ['bg' => 'bg-green-100', 'text' => 'text-green-700', 'bar' => 'bg-green-500', 'border' => 'border-green-200'],
+            $percentage >= 50 => ['bg' => 'bg-amber-100', 'text' => 'text-amber-700', 'bar' => 'bg-amber-400', 'border' => 'border-amber-200'],
+            default => ['bg' => 'bg-red-100', 'text' => 'text-red-700', 'bar' => 'bg-red-400', 'border' => 'border-red-200'],
         };
     }
 }

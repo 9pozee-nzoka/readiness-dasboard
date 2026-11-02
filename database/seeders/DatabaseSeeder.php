@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
             AdminUserSeeder::class,
             DemoDataSeeder::class,
             RequirementSeeder::class,
+            October2026DataSeeder::class,
         ]);
     }
 }

@@ -8,11 +8,11 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>[x-cloak]{display:none!important}</style>
 </head>
-<body class="bg-gray-50 text-gray-900 antialiased min-h-screen">
+<body class="bg-green-50 text-gray-900 antialiased min-h-screen">
 
     {{-- ── Navigation ───────────────────────────────────────────────── --}}
     <nav class="bg-white border-b border-gray-200 shadow-sm relative z-40"
-         x-data="navMenu()" x-init="initChat()">
+         x-data="navMenu()">
 
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-14 sm:h-16">
@@ -36,6 +36,14 @@
                             {{ request()->routeIs('dashboard.index') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-100' }}">
                         Dashboard
                     </a>
+
+                    @if (auth()->user()->canCreateEvents())
+                        <a href="{{ route('events.create') }}"
+                            class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
+                                {{ request()->routeIs('events.create') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-100' }}">
+                            Create Event
+                        </a>
+                    @endif
 
                     {{-- Knowledge Base dropdown --}}
                     <div class="relative" x-data="{ kbOpen: false }">
@@ -61,52 +69,36 @@
                         </div>
                     </div>
 
-                    {{-- Chat --}}
-                    <div class="relative">
-                        <a href="{{ route('chat.index') }}"
-                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
-                                {{ request()->routeIs('chat.*') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-100' }}">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
-                            </svg>
-                            Chat
-                            <span x-show="chatTotal > 0"
-                                class="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold leading-none"
-                                x-text="chatTotal > 99 ? '99+' : chatTotal"></span>
-                        </a>
+                    @php
+                        // Count unread comments directed to current user
+                        $unreadComments = \App\Models\Comment::query()
+                            ->where(function($q) {
+                                $user = auth()->user();
+                                // Comments directed to this specific user
+                                $q->where('directed_to_user_id', $user->id)
+                                    // OR comments directed to user's role
+                                    ->orWhere(function($q2) use ($user) {
+                                        $q2->where('directed_to', $user->role->value)
+                                            ->whereNull('directed_to_user_id');
+                                    });
+                            })
+                            ->where('user_id', '!=', auth()->id()) // Not own comments
+                            ->whereDoesntHave('replies', function($q) {
+                                $q->where('user_id', auth()->id());
+                            })
+                            ->count();
+                    @endphp
 
-                        {{-- Chat toast --}}
-                        <div x-show="chatToast" x-cloak
-                             x-transition:enter="transition ease-out duration-200"
-                             x-transition:enter-start="opacity-0 translate-y-1"
-                             x-transition:enter-end="opacity-100 translate-y-0"
-                             x-transition:leave="transition ease-in duration-150"
-                             x-transition:leave-start="opacity-100"
-                             x-transition:leave-end="opacity-0"
-                             class="absolute left-0 top-full mt-2 w-72 bg-white rounded-xl border border-gray-200 shadow-xl z-50 overflow-hidden">
-                            <div class="flex items-center justify-between px-4 py-2.5 bg-indigo-600">
-                                <span class="text-xs font-semibold text-white">New messages</span>
-                                <button @click="chatToast = false" class="text-indigo-200 hover:text-white">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                    </svg>
-                                </button>
-                            </div>
-                            <ul class="divide-y divide-gray-50 max-h-60 overflow-y-auto">
-                                <template x-for="room in chatRooms" :key="room.id">
-                                    <a :href="room.url" class="flex items-center justify-between px-4 py-2.5 hover:bg-indigo-50 transition-colors group">
-                                        <span class="text-sm text-gray-800 group-hover:text-indigo-700 truncate" x-text="room.name"></span>
-                                        <span class="ml-2 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-100 text-red-700 text-[11px] font-bold shrink-0"
-                                              x-text="room.count"></span>
-                                    </a>
-                                </template>
-                            </ul>
-                            <div class="px-4 py-2 border-t border-gray-100 text-center">
-                                <a href="{{ route('chat.index') }}" class="text-xs text-indigo-600 hover:text-indigo-700 font-medium">View all chat rooms →</a>
-                            </div>
-                        </div>
-                    </div>
+                    <a href="{{ route('comments.index') }}"
+                        class="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
+                            {{ request()->routeIs('comments.*') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-100' }}">
+                        Comments
+                        @if ($unreadComments > 0)
+                            <span class="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold leading-none">
+                                {{ $unreadComments > 99 ? '99+' : $unreadComments }}
+                            </span>
+                        @endif
+                    </a>
                 </div>
                 @endauth
 
@@ -127,18 +119,6 @@
                                 {{ $unreadNotifs > 9 ? '9+' : $unreadNotifs }}
                             </span>
                         @endif
-                    </a>
-
-                    {{-- Chat icon (mobile only) --}}
-                    <a href="{{ route('chat.index') }}"
-                        class="relative inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-gray-100 transition-colors text-gray-600 lg:hidden">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
-                        </svg>
-                        <span x-show="chatTotal > 0"
-                            class="absolute top-0.5 right-0.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-red-500 text-white text-[10px] font-bold"
-                            x-text="chatTotal > 9 ? '9+' : chatTotal"></span>
                     </a>
 
                     {{-- Desktop user menu --}}
@@ -228,11 +208,19 @@
                 {{-- Nav links --}}
                 @php
                     $mobileLinks = [
-                        ['route' => 'dashboard.index',        'label' => '🏠 Dashboard'],
-                        ['route' => 'knowledge-base.index',   'label' => '📚 Post-Event Reviews'],
-                        ['route' => 'recurring-issues.index', 'label' => '🔁 Recurring Issues'],
-                        ['route' => 'chat.index',             'label' => '💬 Chat'],
+                        ['route' => 'dashboard.index',        'label' => '🏠 Dashboard', 'badge' => null],
                     ];
+                    
+                    // Add Create Event link for users who can create events
+                    if (auth()->user()->canCreateEvents()) {
+                        $mobileLinks[] = ['route' => 'events.create', 'label' => '➕ Create Event', 'badge' => null];
+                    }
+                    
+                    $mobileLinks = array_merge($mobileLinks, [
+                        ['route' => 'comments.index',         'label' => '💬 Comments', 'badge' => $unreadComments],
+                        ['route' => 'knowledge-base.index',   'label' => '📚 Post-Event Reviews', 'badge' => null],
+                        ['route' => 'recurring-issues.index', 'label' => '🔁 Recurring Issues', 'badge' => null],
+                    ]);
                 @endphp
 
                 @foreach ($mobileLinks as $link)
@@ -240,10 +228,10 @@
                         class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors
                             {{ request()->routeIs($link['route'].'*') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700 hover:bg-gray-100' }}">
                         {{ $link['label'] }}
-                        @if ($link['route'] === 'chat.index')
-                            <span x-show="chatTotal > 0"
-                                class="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold"
-                                x-text="chatTotal > 9 ? '9+' : chatTotal"></span>
+                        @if (isset($link['badge']) && $link['badge'] > 0)
+                            <span class="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold">
+                                {{ $link['badge'] > 9 ? '9+' : $link['badge'] }}
+                            </span>
                         @endif
                     </a>
                 @endforeach
@@ -330,50 +318,9 @@
     <script>
     function navMenu() {
         return {
-            mobileOpen: false,
-            chatTotal: 0,
-            chatRooms: [],
-            chatToast: false,
-            chatPrevTotal: 0,
-
-            initChat() {
-                this.fetchChat();
-                setInterval(() => this.fetchChat(), 15000);
-            },
-
-            async fetchChat() {
-                try {
-                    const res = await fetch('/chat/unread', { headers: { Accept: 'application/json' } });
-                    if (!res.ok) return;
-                    const data = await res.json();
-                    const newTotal = data.total ?? 0;
-
-                    if (newTotal > this.chatPrevTotal && !window.location.pathname.startsWith('/chat/')) {
-                        this.chatToast = true;
-                        setTimeout(() => { this.chatToast = false; }, 6000);
-                    }
-
-                    this.chatTotal     = newTotal;
-                    this.chatPrevTotal = newTotal;
-                    this.chatRooms     = data.rooms ?? [];
-                } catch (e) { /* silent */ }
-            },
+            mobileOpen: false
         };
     }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        if (typeof window.Echo === 'undefined') return;
-        @foreach(\App\Models\ChatRoom::where('is_active', true)->get()->filter(fn($r) => $r->canAccess(auth()->user())) as $navRoom)
-        window.Echo.private('chat-room.{{ $navRoom->id }}')
-            .listen('.message.sent', () => {
-                document.dispatchEvent(new CustomEvent('chat-new-message'));
-            });
-        @endforeach
-        document.addEventListener('chat-new-message', () => {
-            const nav = document.querySelector('[x-data="navMenu()"]');
-            if (nav && nav._x_dataStack) nav._x_dataStack[0].fetchChat();
-        });
-    });
     </script>
     @endauth
 </body>

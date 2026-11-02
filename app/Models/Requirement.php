@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Requirement extends Model
 {
@@ -29,6 +28,10 @@ class Requirement extends Model
         'completed_at',
         'is_escalated',
         'escalated_at',
+        'is_verified',
+        'verified_by',
+        'verified_at',
+        'verification_notes',
     ];
 
     protected function casts(): array
@@ -42,6 +45,8 @@ class Requirement extends Model
             'priority' => Priority::class,
             'status' => RequirementStatus::class,
             'requires_deliberation' => 'boolean',
+            'is_verified' => 'boolean',
+            'verified_at' => 'datetime',
         ];
     }
 
@@ -60,9 +65,9 @@ class Requirement extends Model
         return $this->belongsTo(User::class, 'assigned_to');
     }
 
-    public function deliberation(): HasOne
+    public function verifiedBy(): BelongsTo
     {
-        return $this->hasOne(Deliberation::class);
+        return $this->belongsTo(User::class, 'verified_by');
     }
 
     public function dependencies(): HasMany
@@ -98,7 +103,6 @@ class Requirement extends Model
     public function escalate(): void
     {
         $this->update([
-            'status' => RequirementStatus::Escalated,
             'is_escalated' => true,
             'escalated_at' => now(),
         ]);
@@ -112,6 +116,52 @@ class Requirement extends Model
             'is_escalated' => $status->isEscalated(),
             'completed_at' => $status->isCompleted() ? now() : null,
         ]);
+    }
+
+    // ── Verification helpers ──────────────────────────────────────
+
+    public function verify(User $user, ?string $notes = null): void
+    {
+        $this->update([
+            'is_verified' => true,
+            'verified_by' => $user->id,
+            'verified_at' => now(),
+            'verification_notes' => $notes,
+        ]);
+
+        // Send notification to assigned user
+        if ($this->assignedTo) {
+            Notification::notify(
+                userId: $this->assignedTo->id,
+                type: 'verification_approved',
+                body: "Your requirement \"{$this->description}\" has been verified by {$user->name}",
+                actionUrl: route('events.show', $this->event),
+                eventId: $this->event_id,
+                requirementId: $this->id,
+                title: 'Requirement Verified'
+            );
+        }
+    }
+
+    public function unverify(): void
+    {
+        $this->update([
+            'is_verified' => false,
+            'verified_by' => null,
+            'verified_at' => null,
+            'verification_notes' => null,
+        ]);
+    }
+
+    public function needsVerification(): bool
+    {
+        return $this->is_completed && ! $this->is_verified;
+    }
+
+    public function countsTowardReadiness(): bool
+    {
+        // Per October 2026 spec: only verified completed requirements count
+        return $this->is_completed && $this->is_verified;
     }
 
     // ── Computed helpers ──────────────────────────────────────────
@@ -171,5 +221,16 @@ class Requirement extends Model
     public function scopeAssignedTo(Builder $query, int $userId): Builder
     {
         return $query->where('assigned_to', $userId);
+    }
+
+    public function scopeVerified(Builder $query): Builder
+    {
+        return $query->where('is_verified', true);
+    }
+
+    public function scopeNeedsVerification(Builder $query): Builder
+    {
+        return $query->where('is_completed', true)
+            ->where('is_verified', false);
     }
 }

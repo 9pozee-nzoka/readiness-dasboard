@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Department;
 use App\Models\Event;
+use App\Models\Notification;
 use App\Models\User;
-use App\Notifications\IncompleteTasksReminderNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -50,13 +50,17 @@ class ReminderController extends Controller
             ->whereIn('role', ['hod', 'employee'])
             ->get();
 
+        $incompleteCount = $incompleteRequirements->count();
+        $body = "{$user->name} sent a reminder: You have {$incompleteCount} incomplete requirement(s) for {$event->name}";
+
         foreach ($recipients as $recipient) {
-            $recipient->notify(new IncompleteTasksReminderNotification(
-                event: $event,
-                department: $department,
-                incompleteRequirements: $incompleteRequirements,
-                sentBy: $user,
-            ));
+            Notification::notify(
+                $recipient->id,
+                Notification::TYPE_ATTENTION_REQUIRED,
+                $body,
+                route('events.show', $event->id),
+                $event->id
+            );
         }
 
         return back()->with('success', 'Reminder sent to '.$recipients->count().' member(s) of '.$department->name.'.');

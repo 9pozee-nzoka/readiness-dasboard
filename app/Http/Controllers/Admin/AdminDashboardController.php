@@ -2,9 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Enums\DeliberationStatus;
 use App\Http\Controllers\Controller;
-use App\Models\Deliberation;
 use App\Models\Department;
 use App\Models\Event;
 use App\Models\PageVisit;
@@ -55,19 +53,6 @@ class AdminDashboardController extends Controller
         $completedReqs = Requirement::where('status', 'completed')->count();
         $completionRate = $totalReqs > 0 ? (int) round(($completedReqs / $totalReqs) * 100) : 0;
 
-        // Pending deliberations
-        $pendingDeliberations = Deliberation::where('status', DeliberationStatus::Open)
-            ->with(['event', 'requirement'])
-            ->orderByRaw("CASE impact_level WHEN 'critical' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END")
-            ->orderBy('decision_due_date')
-            ->limit(5)
-            ->get();
-
-        $overdueDeliberations = Deliberation::where('status', DeliberationStatus::Open)
-            ->whereNotNull('decision_due_date')
-            ->where('decision_due_date', '<', now()->toDateString())
-            ->count();
-
         // Department readiness for current week
         $departments = Department::where('is_active', true)->orderBy('name')->get();
         $deptReadiness = $departments->map(function ($dept) use ($currentEvents) {
@@ -97,7 +82,6 @@ class AdminDashboardController extends Controller
             'totalUsers', 'pendingApprovals', 'totalEvents', 'totalDepartments',
             'avgReadiness', 'avgDecisionReadiness', 'upcomingEvents', 'visitorsToday', 'visitorsThisWeek',
             'completionRate', 'deptReadiness', 'visitsByDay',
-            'pendingDeliberations', 'overdueDeliberations',
         ));
     }
 }

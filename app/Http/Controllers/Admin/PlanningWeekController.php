@@ -5,9 +5,14 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ImportWeeklyScheduleRequest;
 use App\Http\Requests\Admin\StorePlanningWeekRequest;
+use App\Mail\ScheduleShared;
+use App\Models\Department;
+use App\Models\Notification;
 use App\Models\PlanningWeek;
+use App\Models\User;
 use App\Services\WeeklyScheduleImportService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
@@ -146,5 +151,117 @@ class PlanningWeekController extends Controller
         });
 
         return back()->with('success', "{$planningWeek->label} is now the current planning week.");
+    }
+
+    public function share(Request $request, PlanningWeek $planningWeek): RedirectResponse
+    {
+        $request->validate([
+            'departments' => 'required|array',
+            'departments.*' => 'exists:departments,id',
+        ]);
+
+        $departments = Department::whereIn('id', $request->input('departments'))->get();
+        $planningWeek->load('events');
+
+        $sentCount = 0;
+
+        foreach ($departments as $department) {
+            // Get all users in this department (HODs and employees)
+            $recipients = User::where('department_id', $department->id)
+                ->whereIn('role', ['hod', 'employee'])
+                ->where('is_approved', true)
+                ->get();
+
+            foreach ($recipients as $recipient) {
+                Notification::notify(
+                    $recipient->id,
+                    Notification::TYPE_EVENT_UPDATED,
+                    auth()->user()->name." shared the weekly schedule for {$planningWeek->label} with {$department->name}",
+                    route('dashboard.index'),
+                    null
+                );
+
+                // Send email if not a fake address
+                if ($recipient->email && $this->isRealEmail($recipient->email)) {
+                    \Mail::to($recipient->email)->send(
+                        new ScheduleShared($planningWeek, $recipient, auth()->user(), $department->name)
+                    );
+                }
+
+                $sentCount++;
+            }
+        }
+
+        $deptCount = $departments->count();
+        $message = "Schedule shared to {$deptCount} department(s) ({$sentCount} recipients).";
+
+        return back()->with('success', $message);
+    }
+
+    public function shareAll(PlanningWeek $planningWeek): RedirectResponse
+    {
+        $departments = Department::where('is_active', true)->get();
+        $planningWeek->load('events');
+
+        $sentCount = 0;
+
+        foreach ($departments as $department) {
+            // Get all users in this department (HODs and employees)
+            $recipients = User::where('department_id', $department->id)
+                ->whereIn('role', ['hod', 'employee'])
+                ->where('is_approved', true)
+                ->get();
+
+            foreach ($recipients as $recipient) {
+                Notification::notify(
+                    $recipient->id,
+                    Notification::TYPE_EVENT_UPDATED,
+                    auth()->user()->name." shared the weekly schedule for {$planningWeek->label} with {$department->name}",
+                    route('dashboard.index'),
+                    null
+                );
+
+                // Send email if not a fake address
+                if ($recipient->email && $this->isRealEmail($recipient->email)) {
+                    \Mail::to($recipient->email)->send(
+                        new ScheduleShared($planningWeek, $recipient, auth()->user(), $department->name)
+                    );
+                }
+
+                $sentCount++;
+            }
+        }
+
+        $deptCount = $departments->count();
+        $message = "Schedule shared to all {$deptCount} departments ({$sentCount} recipients).";
+
+        return back()->with('success', $message);
+    }
+
+    /**
+     * Check if email is real (not fake/seeded)
+     */
+    private function isRealEmail(string $email): bool
+    {
+        $fakeEmails = [
+            'ict-hod@ksg.ac.ke',
+            'finance-hod@ksg.ac.ke',
+            'administration-hod@ksg.ac.ke',
+            'security-hod@ksg.ac.ke',
+            'logistics-hod@ksg.ac.ke',
+            'communications-hod@ksg.ac.ke',
+            'facilities-hod@ksg.ac.ke',
+            'human-resources-hod@ksg.ac.ke',
+            'protocol-hod@ksg.ac.ke',
+            'catering-hod@ksg.ac.ke',
+            'kevin.omondi@ksg.ac.ke',
+            'sarah.achieng@ksg.ac.ke',
+            'paul.kiptoo@ksg.ac.ke',
+            'director@ksg.ac.ke',
+        ];
+
+        return ! in_array(strtolower($email), $fakeEmails) &&
+               ! str_contains(strtolower($email), '@example.com') &&
+               ! str_contains(strtolower($email), '@test.com');
     }
 }
