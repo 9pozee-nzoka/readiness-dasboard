@@ -20,6 +20,13 @@ class DemoDataSeeder extends Seeder
 {
     public function run(): void
     {
+        // Skip demo data in production
+        if (app()->environment('production')) {
+            $this->command->warn('Skipping demo data seeder in production environment.');
+
+            return;
+        }
+
         $this->command->info('Seeding demo data...');
 
         // ── 1. Planning Weeks ───────────────────────────────────────
