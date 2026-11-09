@@ -38,6 +38,7 @@
                 <thead class="bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
                     <tr>
                         <th class="px-5 py-3">Week</th>
+                        <th class="px-5 py-3">FY Week</th>
                         <th class="px-5 py-3">Campus</th>
                         <th class="px-5 py-3">Events</th>
                         <th class="px-5 py-3">Status</th>
@@ -54,6 +55,19 @@
                                 <p class="text-xs text-gray-500 mt-0.5">
                                     {{ $week->week_start->format('d M Y') }} – {{ $week->week_end->format('d M Y') }}
                                 </p>
+                            </td>
+                            <td class="px-5 py-4">
+                                @if($week->financial_year)
+                                    <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-indigo-50 text-indigo-700 text-xs font-medium">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                        </svg>
+                                        {{ $week->financial_year }}
+                                    </span>
+                                    <p class="text-xs text-gray-500 mt-1">Week {{ $week->week_number }}</p>
+                                @else
+                                    <span class="text-gray-400 text-xs">—</span>
+                                @endif
                             </td>
                             <td class="px-5 py-4 text-gray-600">{{ $week->campus ?? '—' }}</td>
                             <td class="px-5 py-4 text-gray-600">{{ $week->events_count }}</td>

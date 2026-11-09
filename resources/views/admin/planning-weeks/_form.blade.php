@@ -23,6 +23,23 @@
     </div>
 </div>
 
+<div class="grid grid-cols-2 gap-4 bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+    <div>
+        <label class="block text-sm font-medium text-indigo-900 mb-1">Financial Year</label>
+        <p id="fy-display" class="text-lg font-semibold text-indigo-700">
+            {{ old('financial_year', $week?->financial_year) ?: '—' }}
+        </p>
+        <p class="text-xs text-indigo-600 mt-1">Auto-calculated (July-June cycle)</p>
+    </div>
+    <div>
+        <label class="block text-sm font-medium text-indigo-900 mb-1">Week Number</label>
+        <p id="week-num-display" class="text-lg font-semibold text-indigo-700">
+            {{ old('week_number', $week?->week_number) ? 'Week '.old('week_number', $week?->week_number) : '—' }}
+        </p>
+        <p class="text-xs text-indigo-600 mt-1">Week 1-52 within FY</p>
+    </div>
+</div>
+
 <div>
     <label for="campus" class="block text-sm font-medium text-gray-700 mb-1">Campus</label>
     <input type="text" name="campus" id="campus" value="{{ old('campus', $week?->campus) }}" placeholder="Nairobi"
@@ -40,3 +57,50 @@
         class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
     Mark as current planning week
 </label>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const weekStartInput = document.getElementById('week_start');
+    const fyDisplay = document.getElementById('fy-display');
+    const weekNumDisplay = document.getElementById('week-num-display');
+
+    function calculateFYAndWeek() {
+        const weekStartValue = weekStartInput.value;
+        if (!weekStartValue) {
+            fyDisplay.textContent = '—';
+            weekNumDisplay.textContent = '—';
+            return;
+        }
+
+        const weekStart = new Date(weekStartValue);
+        const year = weekStart.getFullYear();
+        const month = weekStart.getMonth() + 1; // JS months are 0-indexed
+        const fyStartMonth = 7; // July
+
+        let fyStart, fy;
+        if (month < fyStartMonth) {
+            fyStart = new Date(year - 1, fyStartMonth - 1, 1);
+            fy = (year - 1) + '/' + year;
+        } else {
+            fyStart = new Date(year, fyStartMonth - 1, 1);
+            fy = year + '/' + (year + 1);
+        }
+
+        // Calculate week number
+        const diffTime = weekStart - fyStart;
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        let weekNumber = Math.floor(diffDays / 7) + 1;
+        weekNumber = Math.min(Math.max(weekNumber, 1), 52);
+
+        fyDisplay.textContent = fy;
+        weekNumDisplay.textContent = 'Week ' + weekNumber;
+    }
+
+    weekStartInput.addEventListener('change', calculateFYAndWeek);
+    
+    // Calculate on page load if week_start is already filled
+    if (weekStartInput.value) {
+        calculateFYAndWeek();
+    }
+});
+</script>

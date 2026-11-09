@@ -14,6 +14,16 @@
                 @if ($week->schedule_reference) &bull; {{ $week->schedule_reference }} @endif
                 @if ($week->is_current) &bull; <span class="text-indigo-600 font-medium">Current week</span> @endif
             </p>
+            @if($week->financial_year)
+                <div class="mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-50 border border-indigo-200">
+                    <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    <span class="text-sm font-medium text-indigo-700">FY {{ $week->financial_year }}</span>
+                    <span class="text-indigo-400">•</span>
+                    <span class="text-sm font-medium text-indigo-700">Week {{ $week->week_number }}</span>
+                </div>
+            @endif
         </div>
         <div class="flex flex-wrap gap-2">
             <a href="{{ route('admin.events.create', ['planning_week' => $week->id]) }}"
