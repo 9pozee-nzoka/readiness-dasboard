@@ -162,10 +162,12 @@ class EventController extends Controller
                 'New Event Created'
             );
 
-            // Email notification
-            Mail::to($hod->email)->send(
-                new EventCreatedNotification($event, Auth::user())
-            );
+            // Queue email notification (skip fake/seeded emails)
+            if ($hod->email && ! $this->isFakeEmail($hod->email)) {
+                Mail::to($hod->email)->queue(
+                    new EventCreatedNotification($event, Auth::user())
+                );
+            }
         }
 
         return redirect()->route('admin.events.show', $event)
@@ -236,5 +238,27 @@ class EventController extends Controller
 
             fclose($handle);
         }, $filename, ['Content-Type' => 'text/csv']);
+    }
+
+    /**
+     * Check if email is fake/seeded (to avoid sending emails in development)
+     */
+    private function isFakeEmail(string $email): bool
+    {
+        $fakeEmails = [
+            '@example.com',
+            '@example.org',
+            '@ksg.ac.ke', // Seeded demo accounts
+            'noreply@',
+            'no-reply@',
+        ];
+
+        foreach ($fakeEmails as $pattern) {
+            if (str_contains($email, $pattern)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
