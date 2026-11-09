@@ -62,6 +62,56 @@
         </div>
     @endif
 
+    {{-- Recent Notifications --}}
+    @php
+        $recentNotifications = auth()->user()->notifications()->latest()->limit(5)->get();
+        $unreadCount = auth()->user()->unreadNotifications()->count();
+    @endphp
+    @if ($recentNotifications->isNotEmpty())
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-6">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="font-semibold text-gray-900">Recent Notifications</h2>
+                <div class="flex items-center gap-2">
+                    @if ($unreadCount > 0)
+                        <span class="text-xs text-indigo-600 font-medium">{{ $unreadCount }} unread</span>
+                    @endif
+                    <a href="{{ route('notifications.index') }}" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">View all →</a>
+                </div>
+            </div>
+            <div class="space-y-2">
+                @foreach ($recentNotifications as $notification)
+                    <a href="{{ $notification->action_url ?? route('notifications.index') }}"
+                        onclick="event.preventDefault(); fetch('{{ route('notifications.read', $notification) }}', { method: 'PATCH', headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' } }).then(() => window.location.href = '{{ $notification->action_url ?? route('notifications.index') }}');"
+                        class="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors {{ $notification->isRead() ? 'opacity-60' : 'bg-indigo-50/30' }}">
+                        <div class="w-8 h-8 rounded-full {{ $notification->isRead() ? 'bg-gray-100' : 'bg-indigo-100' }} flex items-center justify-center shrink-0 mt-0.5">
+                            <svg class="w-4 h-4 {{ $notification->isRead() ? 'text-gray-500' : 'text-indigo-600' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                @if ($notification->type === 'event_created')
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                @elseif ($notification->type === 'assignment')
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                @elseif ($notification->type === 'comment_posted')
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                                @else
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                                @endif
+                            </svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            @if ($notification->title)
+                                <p class="text-sm font-medium text-gray-900 mb-0.5">{{ $notification->title }}</p>
+                            @endif
+                            <p class="text-sm text-gray-700">{{ $notification->body }}</p>
+                            <p class="text-xs text-gray-400 mt-1">{{ $notification->created_at->diffForHumans() }}</p>
+                        </div>
+                        @if (!$notification->isRead())
+                            <div class="w-2 h-2 rounded-full bg-indigo-500 shrink-0 mt-2"></div>
+                        @endif
+                    </a>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
     {{-- Critical Alerts Panel --}}
     @if ($criticalAlerts->isNotEmpty() || $overdueCount > 0)
         <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">

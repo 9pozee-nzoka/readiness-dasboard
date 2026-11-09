@@ -6,6 +6,7 @@ use App\Enums\Priority;
 use App\Enums\ScheduleCategory;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
+use App\Mail\EventCreatedNotification;
 use App\Models\AuditLog;
 use App\Models\Department;
 use App\Models\Event;
@@ -20,6 +21,7 @@ use App\Models\WeeklyAccommodation;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -285,6 +287,7 @@ class AdminEventController extends Controller
             ->get();
 
         foreach ($hods as $hod) {
+            // In-app notification
             Notification::notify(
                 $hod->id,
                 Notification::TYPE_EVENT_CREATED,
@@ -294,6 +297,11 @@ class AdminEventController extends Controller
                 null,
                 null,
                 'New Event Created'
+            );
+
+            // Email notification
+            Mail::to($hod->email)->send(
+                new EventCreatedNotification($event, Auth::user())
             );
         }
 

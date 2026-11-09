@@ -383,7 +383,7 @@
                         </ul>
 
                         {{-- Add requirement --}}
-                        @if ($user->canManageEvents())
+                        @if ($user->canManageEvents() || ($user->isHod() && $user->department_id === $dr['department']->id))
                             <div class="px-4 sm:px-6 py-3 bg-gray-50 border-t border-gray-100 print:hidden">
                                 <form method="POST" action="{{ route('requirements.store') }}" class="flex flex-col sm:flex-row flex-wrap gap-2">
                                     @csrf

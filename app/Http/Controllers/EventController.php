@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\Priority;
 use App\Enums\UserRole;
+use App\Mail\EventCreatedNotification;
 use App\Models\Department;
 use App\Models\Event;
 use App\Models\Notification;
@@ -12,6 +13,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -140,6 +142,7 @@ class EventController extends Controller
             ->get();
 
         foreach ($hods as $hod) {
+            // In-app notification
             Notification::notify(
                 $hod->id,
                 Notification::TYPE_EVENT_CREATED,
@@ -149,6 +152,11 @@ class EventController extends Controller
                 null,
                 null,
                 'New Event Created'
+            );
+
+            // Email notification
+            Mail::to($hod->email)->send(
+                new EventCreatedNotification($event, Auth::user())
             );
         }
 

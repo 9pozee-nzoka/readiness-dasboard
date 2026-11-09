@@ -187,7 +187,18 @@ class RequirementController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        abort_unless(Auth::user()->canManageEvents(), 403);
+        $user = Auth::user();
+
+        // Allow admins, course coordinators, programme assistants, and HODs (for their own department)
+        $canAdd = $user->canManageEvents();
+
+        if (! $canAdd && $user->isHod()) {
+            // HODs can add requirements for their own department
+            $departmentId = $request->integer('department_id');
+            $canAdd = ($user->department_id === $departmentId);
+        }
+
+        abort_unless($canAdd, 403, 'You can only add requirements for your own department.');
 
         $validated = $request->validate([
             'event_id' => ['required', 'exists:events,id'],
