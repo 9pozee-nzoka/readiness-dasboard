@@ -299,9 +299,9 @@ class AdminEventController extends Controller
                 'New Event Created'
             );
 
-            // Queue email notification (skip fake/seeded emails)
+            // Send email notification immediately (skip fake/seeded emails)
             if ($hod->email && ! $this->isFakeEmail($hod->email)) {
-                Mail::to($hod->email)->queue(
+                Mail::to($hod->email)->send(
                     new EventCreatedNotification($event, Auth::user())
                 );
             }
