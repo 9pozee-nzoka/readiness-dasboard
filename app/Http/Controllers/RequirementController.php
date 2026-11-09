@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\Priority;
 use App\Enums\RequirementStatus;
 use App\Mail\RequirementAssigned;
+use App\Mail\RequirementUnassigned;
 use App\Models\AuditLog;
 use App\Models\Department;
 use App\Models\Notification;
@@ -149,7 +150,32 @@ class RequirementController extends Controller
             'Staff member must be in the same department.'
         );
 
-        $oldAssignee = $requirement->assigned_to;
+        $oldAssigneeId = $requirement->assigned_to;
+        $isReassignment = $oldAssigneeId && $oldAssigneeId !== $assignee->id;
+
+        // If reassigning, notify the old assignee
+        if ($isReassignment) {
+            $oldAssigneeUser = User::find($oldAssigneeId);
+
+            if ($oldAssigneeUser) {
+                // System notification for old assignee
+                Notification::notify(
+                    $oldAssigneeUser->id,
+                    Notification::TYPE_ASSIGNMENT,
+                    "You have been unassigned from: {$requirement->description}",
+                    route('events.show', $requirement->event_id),
+                    $requirement->event_id,
+                    $requirement->id
+                );
+
+                // Email notification for old assignee
+                if ($oldAssigneeUser->email && ! $this->isFakeEmail($oldAssigneeUser->email)) {
+                    \Mail::to($oldAssigneeUser->email)->send(
+                        new RequirementUnassigned($requirement->load(['event', 'department']), $oldAssigneeUser, $user)
+                    );
+                }
+            }
+        }
 
         $requirement->update([
             'assigned_to' => $assignee->id,
@@ -160,29 +186,35 @@ class RequirementController extends Controller
             'user_id' => $user->id,
             'event_id' => $requirement->event_id,
             'requirement_id' => $requirement->id,
-            'action' => 'updated',
-            'old_values' => ['assigned_to' => $oldAssignee],
+            'action' => $isReassignment ? 'reassigned' : 'assigned',
+            'old_values' => ['assigned_to' => $oldAssigneeId],
             'new_values' => ['assigned_to' => $assignee->id, 'responsible_officer' => $assignee->name],
         ]);
 
-        // Notify assignee using custom notification system
+        // Notify new assignee using custom notification system
         Notification::notify(
             $assignee->id,
             Notification::TYPE_ASSIGNMENT,
-            "You have been assigned: {$requirement->description}",
+            $isReassignment
+                ? "You have been reassigned: {$requirement->description}"
+                : "You have been assigned: {$requirement->description}",
             route('events.show', $requirement->event_id),
             $requirement->event_id,
             $requirement->id
         );
 
-        // Send email notification
+        // Send email notification to new assignee
         if ($assignee->email && ! $this->isFakeEmail($assignee->email)) {
             \Mail::to($assignee->email)->send(
                 new RequirementAssigned($requirement->load(['event', 'department']), $assignee, $user)
             );
         }
 
-        return back()->with('success', 'Requirement assigned to '.$assignee->name.'.');
+        $message = $isReassignment
+            ? "Requirement reassigned to {$assignee->name}."
+            : "Requirement assigned to {$assignee->name}.";
+
+        return back()->with('success', $message);
     }
 
     public function store(Request $request): RedirectResponse

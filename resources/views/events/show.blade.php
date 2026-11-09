@@ -292,8 +292,8 @@
                                                 @csrf @method('PATCH')
                                                 <select name="assigned_to" onchange="this.form.submit()"
                                                     class="text-xs border border-gray-300 rounded-lg px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-500 max-w-[100px]"
-                                                    title="Assign">
-                                                    <option value="">Assign…</option>
+                                                    title="{{ $req->assigned_to ? 'Reassign' : 'Assign' }}">
+                                                    <option value="">{{ $req->assigned_to ? 'Reassign…' : 'Assign…' }}</option>
                                                     @php
                                                         $deptStaff = \App\Models\User::where('department_id', $dr['department']->id)
                                                             ->whereIn('role', ['hod', 'employee'])->where('is_approved', true)->orderBy('name')->get();
