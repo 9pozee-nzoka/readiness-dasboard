@@ -82,6 +82,14 @@ class User extends Authenticatable
         return $this->hasMany(Notification::class, 'user_id');
     }
 
+    /**
+     * Get unread notifications for this user
+     */
+    public function unreadNotifications(): HasMany
+    {
+        return $this->hasMany(Notification::class, 'user_id')->whereNull('read_at');
+    }
+
     // ── Approval helpers ──────────────────────────────────────────
 
     public function isPending(): bool
