@@ -64,7 +64,10 @@ class EventController extends Controller
                 'status' => Department::ragStatus($percentage),
                 'classes' => Department::ragClasses($percentage),
             ];
-        })->filter(fn ($d) => $d['total'] > 0)->values();
+        })->filter(function ($d) use ($user) {
+            // Show departments with requirements, OR show HOD's own department even if empty
+            return $d['total'] > 0 || ($user->isHod() && $user->department_id === $d['department']->id);
+        })->values();
 
         $priorities = Priority::cases();
 
