@@ -56,6 +56,13 @@ class RequirementSeeder extends Seeder
 
     public function run(): void
     {
+        // Skip in production - this seeder creates demo requirements using fake()
+        if (app()->environment('production')) {
+            $this->command->warn('Skipping requirement seeder in production environment.');
+
+            return;
+        }
+
         $events = Event::doesntHave('requirements')->get();
 
         if ($events->isEmpty()) {
