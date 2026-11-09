@@ -32,15 +32,20 @@ class EventController extends Controller
             ->orderBy('name')
             ->get();
 
-        $departmentReadiness = $departments->map(function (Department $dept) use ($event, $priorityFilter) {
+        $departmentReadiness = $departments->map(function (Department $dept) use ($event, $priorityFilter, $user) {
+            // For employees (staff), only show requirements assigned to them
             $requirements = $event->requirements
                 ->where('department_id', $dept->id)
+                ->when($user->isEmployee(), fn ($c) => $c->where('assigned_to', $user->id))
                 ->when($priorityFilter, fn ($c) => $c->where('priority.value', $priorityFilter))
                 ->sortBy(fn ($r) => $r->priority->sortOrder())
                 ->values();
 
-            // Always use full set for percentage calculations
-            $allReqs = $event->requirements->where('department_id', $dept->id);
+            // For percentage calculations, use filtered set for employees, full set for others
+            $allReqs = $event->requirements
+                ->where('department_id', $dept->id)
+                ->when($user->isEmployee(), fn ($c) => $c->where('assigned_to', $user->id));
+
             $total = $allReqs->count();
             $completed = $allReqs->where('is_completed', true)->count();
             $percentage = $total > 0 ? (int) round(($completed / $total) * 100) : 0;
