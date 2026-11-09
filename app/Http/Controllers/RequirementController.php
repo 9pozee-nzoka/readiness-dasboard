@@ -189,17 +189,6 @@ class RequirementController extends Controller
     {
         $user = Auth::user();
 
-        // Allow admins, course coordinators, programme assistants, and HODs (for their own department)
-        $canAdd = $user->canManageEvents();
-
-        if (! $canAdd && $user->isHod()) {
-            // HODs can add requirements for their own department
-            $departmentId = $request->integer('department_id');
-            $canAdd = ($user->department_id === $departmentId);
-        }
-
-        abort_unless($canAdd, 403, 'You can only add requirements for your own department.');
-
         $validated = $request->validate([
             'event_id' => ['required', 'exists:events,id'],
             'department_id' => ['required', 'exists:departments,id'],
@@ -209,6 +198,12 @@ class RequirementController extends Controller
             'deadline' => ['nullable', 'date'],
             'responsible_officer' => ['nullable', 'string', 'max:255'],
         ]);
+
+        // Authorization: Allow admins, course coordinators, programme assistants, and HODs (for their own department only)
+        $canAdd = $user->canManageEvents() ||
+                  ($user->isHod() && $user->department_id == $validated['department_id']);
+
+        abort_unless($canAdd, 403, 'You can only add requirements for your own department.');
 
         $status = $validated['status'] ?? RequirementStatus::NotStarted;
 
