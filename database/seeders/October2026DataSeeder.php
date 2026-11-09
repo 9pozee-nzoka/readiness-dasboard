@@ -24,6 +24,13 @@ class October2026DataSeeder extends Seeder
      */
     public function run(): void
     {
+        // Skip in production - this seeder uses fake() which requires Faker (dev dependency)
+        if (app()->environment('production')) {
+            $this->command->warn('Skipping October 2026 data seeder in production environment.');
+
+            return;
+        }
+
         $this->command->info('Seeding October 2026 system data...');
 
         // ── 1. Verify Requirements (HOD Verification) ──────────────────
