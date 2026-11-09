@@ -6,7 +6,7 @@
 set -e
 
 echo "=========================================="
-echo "St. Mary IMC Readiness Dashboard"
+echo "KSG Events Readiness Dashboard"
 echo "Production Build Script"
 echo "=========================================="
 echo ""
@@ -70,7 +70,7 @@ echo ""
 
 # Create deployment package
 echo -e "${YELLOW}4. Creating deployment package...${NC}"
-PACKAGE_NAME="stmary-dashboard-$(date +%Y%m%d-%H%M%S).tar.gz"
+PACKAGE_NAME="ksg-dashboard-$(date +%Y%m%d-%H%M%S).tar.gz"
 
 tar -czf "$PACKAGE_NAME" \
     --exclude=node_modules \

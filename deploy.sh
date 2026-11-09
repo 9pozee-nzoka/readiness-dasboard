@@ -6,7 +6,7 @@
 set -e
 
 echo "=========================================="
-echo "St. Mary IMC Readiness Dashboard"
+echo "KSG Events Readiness Dashboard"
 echo "Production Deployment Script"
 echo "=========================================="
 echo ""

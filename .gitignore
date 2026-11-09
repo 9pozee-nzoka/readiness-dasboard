@@ -38,3 +38,10 @@ AGENTS.md
 CLAUDE.md
 GEMINI.md
 boost.json
+
+# Deployment documentation (keep only README.md)
+DEPLOYMENT*.md
+TRUEHOST*.md
+PRE-DEPLOYMENT*.md
+QUICK-REFERENCE.md
+*-SETUP.md
