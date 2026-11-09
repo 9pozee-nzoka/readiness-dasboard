@@ -72,6 +72,7 @@ echo ""
 echo -e "${YELLOW}4. Creating deployment package...${NC}"
 PACKAGE_NAME="ksg-dashboard-$(date +%Y%m%d-%H%M%S).tar.gz"
 
+# Include public/build since Truehost doesn't support npm/node
 tar -czf "$PACKAGE_NAME" \
     --exclude=node_modules \
     --exclude=.git \
