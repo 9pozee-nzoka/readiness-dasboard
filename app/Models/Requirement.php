@@ -160,8 +160,9 @@ class Requirement extends Model
 
     public function countsTowardReadiness(): bool
     {
-        // Per October 2026 spec: only verified completed requirements count
-        return $this->is_completed && $this->is_verified;
+        // Only completed requirements count toward readiness
+        // NotStarted and InProgress do NOT count
+        return $this->status === RequirementStatus::Completed;
     }
 
     // ── Computed helpers ──────────────────────────────────────────
