@@ -34,7 +34,7 @@
                 </tr>
                 <tr>
                     <td style="padding: 8px 0;"><strong>Venue:</strong></td>
-                    <td style="padding: 8px 0;">{{ $booking->preferred_venue }}</td>
+                    <td style="padding: 8px 0;">{{ $booking->allocated_venue ?? $booking->preferred_venue }}</td>
                 </tr>
             </table>
             
