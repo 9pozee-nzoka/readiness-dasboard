@@ -2,15 +2,20 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Mail\BookingApproved;
 use App\Mail\BookingRejected;
+use App\Mail\EventCreatedNotification;
 use App\Mail\QuotationSent;
 use App\Models\Department;
 use App\Models\Event;
 use App\Models\EventBooking;
+use App\Models\Notification;
 use App\Models\PlanningWeek;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 
@@ -321,7 +326,7 @@ class BookingManagementController extends Controller
                 'type' => 'External Booking',
                 'event_date' => $booking->preferred_start_date,
                 'event_time' => $booking->daily_start_time,
-                'venue' => $booking->preferred_venue ?? 'TBD',
+                'venue' => $booking->allocated_venue ?? $booking->preferred_venue ?? 'TBD',
                 'description' => $booking->event_description,
                 'planning_week_id' => $planningWeek?->id,
             ]);
@@ -336,6 +341,32 @@ class BookingManagementController extends Controller
                     'department_id' => $req['department_id'],
                     'priority' => $req['priority'] ?? 'medium',
                 ]);
+            }
+
+            // Notify all HODs about the new event
+            $hods = User::where('role', UserRole::Hod->value)
+                ->where('is_approved', true)
+                ->get();
+
+            foreach ($hods as $hod) {
+                // In-app notification
+                Notification::notify(
+                    $hod->id,
+                    Notification::TYPE_EVENT_CREATED,
+                    Auth::user()->name." created a new event from booking: {$event->name} on ".$event->event_date->format('d M Y'),
+                    route('events.show', $event),
+                    $event->id,
+                    null,
+                    null,
+                    'New Event Created'
+                );
+
+                // Send email notification (skip fake/seeded emails)
+                if ($hod->email && ! str_ends_with($hod->email, '@example.com') && ! str_ends_with($hod->email, '@test.com')) {
+                    Mail::to($hod->email)->send(
+                        new EventCreatedNotification($event, Auth::user())
+                    );
+                }
             }
 
             DB::commit();
