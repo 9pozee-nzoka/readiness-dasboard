@@ -12,6 +12,7 @@ use App\Models\Department;
 use App\Models\Event;
 use App\Models\EventAccommodation;
 use App\Models\EventTypeRequirement;
+use App\Models\FinancialYear;
 use App\Models\Hostel;
 use App\Models\Notification;
 use App\Models\PlanningWeek;
@@ -34,7 +35,16 @@ class AdminEventController extends Controller
 
     public function index(Request $request): View
     {
-        $weeks = PlanningWeek::withCount('events')->orderBy('week_start', 'desc')->get();
+        $financialYears = FinancialYear::orderByDesc('start_date')->get();
+        $selectedFyId = $request->integer('fy') ?: FinancialYear::where('is_current', true)->value('id');
+
+        $weeksQuery = PlanningWeek::withCount('events')->orderBy('week_start', 'desc');
+
+        if ($selectedFyId) {
+            $weeksQuery->where('financial_year_id', $selectedFyId);
+        }
+
+        $weeks = $weeksQuery->get();
 
         $selectedWeekId = $request->integer('week')
             ?: PlanningWeek::where('is_current', true)->value('id')
@@ -60,14 +70,37 @@ class AdminEventController extends Controller
         $eventTypes = Event::distinct()->orderBy('type')->pluck('type');
 
         return view('admin.events.index', compact(
-            'weeks', 'selectedWeek', 'events', 'departments',
+            'financialYears', 'selectedFyId', 'weeks', 'selectedWeek', 'events', 'departments',
             'search', 'type', 'dateFrom', 'dateTo', 'eventTypes'
         ));
     }
 
     public function create(Request $request): View
     {
-        $weeks = PlanningWeek::orderBy('week_start', 'desc')->get();
+        $financialYears = FinancialYear::orderByDesc('start_date')->get();
+        $selectedFyId = $request->integer('fy') ?: FinancialYear::where('is_current', true)->value('id');
+
+        // Auto-generate weeks if FY is selected and has no weeks
+        if ($selectedFyId) {
+            $fy = FinancialYear::find($selectedFyId);
+            $weekCount = $fy->planningWeeks()->count();
+
+            if ($weekCount === 0) {
+                $created = $fy->generateWeeks('NRB');
+                if ($created > 0) {
+                    session()->flash('info', "Auto-generated {$created} planning weeks for {$fy->name}.");
+                }
+            }
+        }
+
+        $weeksQuery = PlanningWeek::orderBy('week_start', 'desc');
+
+        if ($selectedFyId) {
+            $weeksQuery->where('financial_year_id', $selectedFyId);
+        }
+
+        $weeks = $weeksQuery->get();
+
         $selectedWeekId = $request->integer('planning_week')
             ?: PlanningWeek::where('is_current', true)->value('id');
         $departments = Department::where('is_active', true)->orderBy('name')->get();
@@ -90,6 +123,8 @@ class AdminEventController extends Controller
             ->map(fn ($items) => $items->groupBy('department_id'));
 
         return view('admin.events.create', compact(
+            'financialYears',
+            'selectedFyId',
             'weeks',
             'selectedWeekId',
             'departments',

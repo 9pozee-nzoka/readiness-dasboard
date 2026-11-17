@@ -13,7 +13,7 @@
                 class="block w-full sm:w-64 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
                 @foreach ($weeks as $week)
                     <option value="{{ $week->id }}" @selected($week->id === $selectedWeek?->id)>
-                        {{ $week->label }}{{ $week->is_current ? ' (Current)' : '' }}
+                        {{ $week->displayLabel() }}{{ $week->is_current ? ' (Current)' : '' }}
                     </option>
                 @endforeach
             </select>

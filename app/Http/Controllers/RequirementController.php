@@ -229,6 +229,7 @@ class RequirementController extends Controller
             'status' => ['nullable', Rule::enum(RequirementStatus::class)],
             'deadline' => ['nullable', 'date'],
             'responsible_officer' => ['nullable', 'string', 'max:255'],
+            'assigned_to' => ['nullable', 'exists:users,id'],
         ]);
 
         // Authorization: Allow admins, course coordinators, programme assistants, and HODs (for their own department only)
@@ -236,6 +237,16 @@ class RequirementController extends Controller
                   ($user->isHod() && $user->department_id == $validated['department_id']);
 
         abort_unless($canAdd, 403, 'You can only add requirements for your own department.');
+
+        // If assigned_to is provided, validate they're in the same department
+        if (isset($validated['assigned_to'])) {
+            $assignee = User::findOrFail($validated['assigned_to']);
+            abort_unless(
+                $assignee->department_id == $validated['department_id'],
+                403,
+                'Officer must be in the same department as the requirement.'
+            );
+        }
 
         $status = $validated['status'] ?? RequirementStatus::NotStarted;
 
@@ -247,6 +258,7 @@ class RequirementController extends Controller
             'status' => $status,
             'deadline' => $validated['deadline'] ?? null,
             'responsible_officer' => $validated['responsible_officer'] ?? null,
+            'assigned_to' => $validated['assigned_to'] ?? null,
             'is_completed' => $status->isCompleted(),
         ]);
 
@@ -255,8 +267,32 @@ class RequirementController extends Controller
             'event_id' => $requirement->event_id,
             'requirement_id' => $requirement->id,
             'action' => 'created',
-            'new_values' => $requirement->only(['description', 'priority', 'status', 'deadline', 'responsible_officer']),
+            'new_values' => $requirement->only(['description', 'priority', 'status', 'deadline', 'responsible_officer', 'assigned_to']),
         ]);
+
+        // Send notification and email if requirement is assigned upon creation
+        if ($validated['assigned_to'] ?? null) {
+            $assignee = User::find($validated['assigned_to']);
+
+            if ($assignee) {
+                // Send notification
+                Notification::notify(
+                    $assignee->id,
+                    Notification::TYPE_ASSIGNMENT,
+                    "You have been assigned: {$requirement->description}",
+                    route('events.show', $requirement->event_id),
+                    $requirement->event_id,
+                    $requirement->id
+                );
+
+                // Send email if not a fake email
+                if ($assignee->email && ! $this->isFakeEmail($assignee->email)) {
+                    \Mail::to($assignee->email)->send(
+                        new RequirementAssigned($requirement->load(['event', 'department']), $assignee, $user)
+                    );
+                }
+            }
+        }
 
         return back()->with('success', 'Requirement added.');
     }

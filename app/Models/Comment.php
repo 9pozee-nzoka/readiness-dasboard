@@ -137,7 +137,7 @@ class Comment extends Model
                     // HOD comments → Default to Director (unless specified otherwise)
                     self::notifyDirector($comment, $requirement);
                 } elseif ($commenter->isDirector()) {
-                    // Director comments → Notify relevant HOD
+                    // Director comments → Notify ONLY HOD (not staff directly)
                     self::notifyHOD($comment, $requirement, $department);
                 } elseif ($commenter->isAdmin()) {
                     // Admin comments → Notify both HOD and Director
@@ -146,8 +146,11 @@ class Comment extends Model
                 }
             }
 
-            // Always notify the assigned officer if someone else commented
-            if ($requirement->assigned_to && $comment->user_id !== $requirement->assigned_to) {
+            // Notify assigned officer ONLY if commenter is not Director
+            // Director's comments should only go through HOD (chain of command)
+            if ($requirement->assigned_to
+                && $comment->user_id !== $requirement->assigned_to
+                && ! $commenter->isDirector()) {
                 self::notifyAssignedOfficer($comment, $requirement);
             }
         } elseif ($comment->event_id) {

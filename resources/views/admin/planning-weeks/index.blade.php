@@ -11,11 +11,30 @@
                 class="inline-flex items-center gap-1.5 border border-gray-300 hover:border-gray-400 text-gray-700 text-sm font-medium px-4 py-2 rounded-lg transition-colors">
                 Import schedule
             </a>
-            <a href="{{ route('admin.planning-weeks.create') }}"
+            <a href="{{ route('admin.planning-weeks.create', ['fy' => $selectedFyId]) }}"
                 class="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
                 New week
             </a>
         </div>
+    </div>
+
+    <!-- FY Filter -->
+    <div class="mb-4">
+        <form method="GET" class="flex items-center gap-3">
+            <label for="fy-filter" class="text-sm font-medium text-gray-700">Financial Year:</label>
+            <select
+                id="fy-filter"
+                name="fy"
+                onchange="this.form.submit()"
+                class="rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
+            >
+                @foreach($financialYears as $fy)
+                    <option value="{{ $fy->id }}" @selected($fy->id == $selectedFyId)>
+                        {{ $fy->name }} @if($fy->is_current)(Current)@endif
+                    </option>
+                @endforeach
+            </select>
+        </form>
     </div>
 
     @if (session('success'))

@@ -1,6 +1,7 @@
 <?php
 
 use App\Console\Commands\EscalateOverdueRequirements;
+use App\Console\Commands\UpdateCurrentWeek;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -8,6 +9,12 @@ use Illuminate\Support\Facades\Schedule;
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
+
+// Update current planning week daily at midnight
+Schedule::command(UpdateCurrentWeek::class)
+    ->dailyAt('00:01')
+    ->withoutOverlapping()
+    ->runInBackground();
 
 // Auto-escalate overdue requirements every morning at 07:00
 Schedule::command(EscalateOverdueRequirements::class)

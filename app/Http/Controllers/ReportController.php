@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\ScheduleCategory;
 use App\Models\Department;
 use App\Models\Event;
+use App\Models\FinancialYear;
 use App\Models\PlanningWeek;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -53,6 +54,17 @@ class ReportController extends Controller
      */
     public function weeklySchedule(Request $request): View
     {
+        // Financial year filter
+        $financialYears = FinancialYear::orderByDesc('start_date')->get();
+        $selectedFyId = $request->integer('fy') ?: FinancialYear::where('is_current', true)->value('id');
+
+        // Get weeks for selected FY
+        $weeksQuery = PlanningWeek::orderByDesc('week_start');
+        if ($selectedFyId) {
+            $weeksQuery->where('financial_year_id', $selectedFyId);
+        }
+        $weeks = $weeksQuery->get();
+
         $weekId = $request->integer('week') ?: PlanningWeek::where('is_current', true)->value('id');
         $week = PlanningWeek::findOrFail($weekId);
 
@@ -80,10 +92,8 @@ class ReportController extends Controller
         $totalNonResidents = $events->sum('participants_non_residential');
         $totalParticipants = $totalResidents + $totalNonResidents;
 
-        $weeks = PlanningWeek::orderByDesc('week_start')->get();
-
         return view('reports.weekly-schedule', compact(
-            'week', 'weeks', 'grouped', 'categoryOrder',
+            'financialYears', 'selectedFyId', 'week', 'weeks', 'grouped', 'categoryOrder',
             'totalResidents', 'totalNonResidents', 'totalParticipants'
         ));
     }

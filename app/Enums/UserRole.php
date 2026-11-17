@@ -10,6 +10,7 @@ enum UserRole: string
     case Employee = 'employee';
     case CourseCoordinator = 'course_coordinator';
     case ProgrammeAssistant = 'programme_assistant';
+    case Client = 'client';
 
     public function label(): string
     {
@@ -20,6 +21,7 @@ enum UserRole: string
             self::Employee => 'Employee',
             self::CourseCoordinator => 'Course Coordinator',
             self::ProgrammeAssistant => 'Programme Assistant',
+            self::Client => 'External Client',
         };
     }
 

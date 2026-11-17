@@ -30,13 +30,8 @@ echo ""
 
 # Install production dependencies
 echo -e "${YELLOW}1. Installing production dependencies...${NC}"
-if [ -d "vendor" ]; then
-    echo "Vendor directory exists, running composer update..."
-    composer update --optimize-autoloader --no-dev --prefer-dist
-else
-    echo "Installing fresh dependencies..."
-    composer install --optimize-autoloader --no-dev --prefer-dist
-fi
+echo "Installing production dependencies (without post-install scripts)..."
+composer install --optimize-autoloader --no-dev --prefer-dist --no-scripts
 echo -e "${GREEN}✅ Composer dependencies ready${NC}"
 echo ""
 

@@ -15,7 +15,7 @@
                         @foreach ($weeks as $week)
                             <option value="{{ $week->id }}" @selected($week->id === $selectedWeek?->id)
                                 class="text-gray-900 bg-white">
-                                {{ $week->label }}{{ $week->is_current ? ' ✦' : '' }}
+                                {{ $week->displayLabel() }}{{ $week->is_current ? ' ✦' : '' }}
                             </option>
                         @endforeach
                     </select>
@@ -25,7 +25,7 @@
             <div class="mb-6 sm:mb-8">
                 <p class="text-indigo-300 text-xs sm:text-sm font-medium tracking-wide uppercase mb-1">Director Overview</p>
                 <h1 class="text-xl sm:text-3xl font-bold text-white leading-tight">
-                    {{ $selectedWeek?->label ?? 'Event Readiness' }}
+                    {{ $selectedWeek?->displayLabel() ?? 'Event Readiness' }}
                 </h1>
                 <p class="text-slate-400 text-xs sm:text-sm mt-1">
                     {{ now()->format('l, d F Y') }}

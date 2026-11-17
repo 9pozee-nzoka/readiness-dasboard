@@ -5,21 +5,35 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Models\Event;
+use App\Models\FinancialYear;
 use App\Models\PageVisit;
 use App\Models\PlanningWeek;
 use App\Models\Requirement;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class AdminDashboardController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
         abort_unless(auth()->user()->isAdmin(), 403);
 
+        // Financial year filter
+        $financialYears = FinancialYear::orderByDesc('start_date')->get();
+        $selectedFyId = $request->integer('fy') ?: FinancialYear::where('is_current', true)->value('id');
+        $selectedFy = $financialYears->firstWhere('id', $selectedFyId);
+
         $totalUsers = User::where('is_approved', true)->count();
         $pendingApprovals = User::where('is_approved', false)->count();
-        $totalEvents = Event::count();
+
+        // Filter events by FY if selected
+        $eventsQuery = Event::query();
+        if ($selectedFyId) {
+            $weekIds = PlanningWeek::where('financial_year_id', $selectedFyId)->pluck('id');
+            $eventsQuery->whereIn('planning_week_id', $weekIds);
+        }
+        $totalEvents = $eventsQuery->count();
         $totalDepartments = Department::where('is_active', true)->count();
 
         // Current week events
@@ -36,21 +50,34 @@ class AdminDashboardController extends Controller
             ? (int) round($currentEvents->avg(fn ($e) => $e->decisionReadiness()))
             : 0;
 
-        // Upcoming events (next 14 days)
-        $upcomingEvents = Event::with('planningWeek')
+        // Upcoming events (next 14 days, filtered by FY)
+        $upcomingQuery = Event::with('planningWeek')
             ->where('event_date', '>=', now()->toDateString())
-            ->where('event_date', '<=', now()->addDays(14)->toDateString())
-            ->orderBy('event_date')
-            ->limit(5)
-            ->get();
+            ->where('event_date', '<=', now()->addDays(14)->toDateString());
+
+        if ($selectedFyId) {
+            $weekIds = PlanningWeek::where('financial_year_id', $selectedFyId)->pluck('id');
+            $upcomingQuery->whereIn('planning_week_id', $weekIds);
+        }
+
+        $upcomingEvents = $upcomingQuery->orderBy('event_date')->limit(5)->get();
 
         // Visitor stats — last 7 days
         $visitorsToday = PageVisit::whereDate('visited_at', today())->count();
         $visitorsThisWeek = PageVisit::where('visited_at', '>=', now()->startOfWeek())->count();
 
-        // Requirements completion rate
-        $totalReqs = Requirement::count();
-        $completedReqs = Requirement::where('status', 'completed')->count();
+        // Requirements completion rate (FY filtered)
+        $totalReqsQuery = Requirement::query();
+        $completedReqsQuery = Requirement::where('status', 'completed');
+
+        if ($selectedFyId) {
+            $eventIds = $eventsQuery->pluck('id');
+            $totalReqsQuery->whereIn('event_id', $eventIds);
+            $completedReqsQuery->whereIn('event_id', $eventIds);
+        }
+
+        $totalReqs = $totalReqsQuery->count();
+        $completedReqs = $completedReqsQuery->count();
         $completionRate = $totalReqs > 0 ? (int) round(($completedReqs / $totalReqs) * 100) : 0;
 
         // Department readiness for current week
@@ -79,6 +106,7 @@ class AdminDashboardController extends Controller
         });
 
         return view('admin.dashboard', compact(
+            'financialYears', 'selectedFy',
             'totalUsers', 'pendingApprovals', 'totalEvents', 'totalDepartments',
             'avgReadiness', 'avgDecisionReadiness', 'upcomingEvents', 'visitorsToday', 'visitorsThisWeek',
             'completionRate', 'deptReadiness', 'visitsByDay',

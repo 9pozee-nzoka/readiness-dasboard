@@ -49,6 +49,8 @@
                     ['route' => 'admin.dashboard',                      'label' => 'Overview',         'icon' => 'home'],
                     ['route' => 'admin.planning-weeks.index',            'label' => 'Planning Weeks',   'icon' => 'calendar'],
                     ['route' => 'admin.events.index',                   'label' => 'Events',           'icon' => 'calendar'],
+                    ['route' => 'admin.bookings.index',                 'label' => 'External Bookings', 'icon' => 'clipboard-list'],
+                    ['route' => 'admin.financial-years.index',          'label' => 'Financial Years',  'icon' => 'chart-bar'],
                     ['route' => 'admin.outsourced-services.index',      'label' => 'Outsourced Services', 'icon' => 'briefcase'],
                     ['route' => 'admin.event-type-requirements.index',  'label' => 'Req. Templates',  'icon' => 'template'],
                     ['route' => 'admin.staff.index',                    'label' => 'Staff',            'icon' => 'users'],
@@ -71,6 +73,14 @@
                         @if ($pending > 0)
                             <span class="ml-auto shrink-0 inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-500 text-white text-[10px] font-bold">
                                 {{ $pending > 9 ? '9+' : $pending }}
+                            </span>
+                        @endif
+                    @endif
+                    @if ($item['route'] === 'admin.bookings.index')
+                        @php $pendingBookings = \App\Models\EventBooking::where('status', 'pending')->count(); @endphp
+                        @if ($pendingBookings > 0)
+                            <span class="ml-auto shrink-0 inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-500 text-white text-[10px] font-bold">
+                                {{ $pendingBookings > 9 ? '9+' : $pendingBookings }}
                             </span>
                         @endif
                     @endif

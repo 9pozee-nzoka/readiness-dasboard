@@ -405,13 +405,15 @@
                                             $deptStaff = \App\Models\User::where('department_id', $dr['department']->id)
                                                 ->whereIn('role', ['hod', 'employee'])->where('is_approved', true)->orderBy('name')->get();
                                         @endphp
-                                        <select name="responsible_officer" 
-                                            class="w-40 text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                                        <select name="assigned_to" 
+                                            class="w-40 text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                            onchange="this.form.querySelector('[name=responsible_officer]').value = this.options[this.selectedIndex].text">
                                             <option value="">Select Officer...</option>
                                             @foreach ($deptStaff as $staff)
-                                                <option value="{{ $staff->name }}">{{ $staff->name }}</option>
+                                                <option value="{{ $staff->id }}">{{ $staff->name }}</option>
                                             @endforeach
                                         </select>
+                                        <input type="hidden" name="responsible_officer">
                                         <button type="submit"
                                             class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-3 py-1.5 rounded-lg transition-colors">
                                             Add

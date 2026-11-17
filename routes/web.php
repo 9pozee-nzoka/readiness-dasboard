@@ -6,12 +6,15 @@ use App\Http\Controllers\Admin\AdminEventController;
 use App\Http\Controllers\Admin\AdminStaffController;
 use App\Http\Controllers\Admin\AdminVisitorController;
 use App\Http\Controllers\Admin\AuditLogController;
+use App\Http\Controllers\Admin\BookingManagementController;
 use App\Http\Controllers\Admin\EventTypeRequirementController;
+use App\Http\Controllers\Admin\FinancialYearController;
 use App\Http\Controllers\Admin\OutsourcedServiceController;
 use App\Http\Controllers\Admin\PlanningWeekController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\BookingController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\CommentReplyWebhookController;
 use App\Http\Controllers\DashboardController;
@@ -25,23 +28,39 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RequirementController;
 use Illuminate\Support\Facades\Route;
 
+// ── Homepage (Public Booking Landing) ─────────────────────────────
+Route::get('/', [BookingController::class, 'landing'])->name('home');
+
 // ── Webhook endpoints (public) ────────────────────────────────────
 Route::post('webhooks/email-reply', [EmailReplyController::class, 'handleIncoming'])->name('webhooks.email-reply');
 Route::post('webhooks/comments/email-reply', [CommentReplyWebhookController::class, 'handleEmailReply'])->name('webhooks.comments.email');
 Route::post('webhooks/comments/whatsapp-reply', [CommentReplyWebhookController::class, 'handleWhatsAppReply'])->name('webhooks.comments.whatsapp');
+
+// ── Public Booking Routes ─────────────────────────────────────────
+Route::prefix('bookings')->name('bookings.')->group(function () {
+    Route::get('/', [BookingController::class, 'landing'])->name('landing');
+    Route::get('/create', [BookingController::class, 'create'])->name('create');
+    Route::get('/step/{step}', [BookingController::class, 'showStep'])->name('step');
+    Route::post('/step', [BookingController::class, 'storeStep'])->name('step.store');
+    Route::get('/confirmation/{booking}', [BookingController::class, 'confirmation'])->name('confirmation');
+    Route::post('/track', [BookingController::class, 'track'])->name('track');
+    Route::get('/my-bookings', [BookingController::class, 'myBookings'])->middleware('auth')->name('my-bookings');
+});
 
 // ── Auth ──────────────────────────────────────────────────────────
 Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('login', [LoginController::class, 'login'])->middleware('throttle:10,1');
 Route::get('register', [RegisterController::class, 'showRegistrationForm'])->name('register');
 Route::post('register', [RegisterController::class, 'register'])->middleware('throttle:5,1');
+Route::get('register/client', [RegisterController::class, 'showClientRegistrationForm'])->name('register.client.form');
+Route::post('register/client', [RegisterController::class, 'registerClient'])->middleware('throttle:5,1')->name('register.client');
 Route::post('logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
 
 // ── Authenticated routes ──────────────────────────────────────────
 Route::middleware('auth')->group(function () {
 
     // Dashboard — all roles
-    Route::get('/', [DashboardController::class, 'index'])->name('dashboard.index');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
 
     // Events — all roles can view; create/edit/delete restricted inside controller
     Route::get('events/create', [EventController::class, 'create'])->name('events.create');
@@ -173,5 +192,26 @@ Route::middleware('auth')->group(function () {
         Route::put('event-type-requirements/{eventTypeRequirement}', [EventTypeRequirementController::class, 'update'])->name('event-type-requirements.update');
         Route::patch('event-type-requirements/{eventTypeRequirement}/toggle', [EventTypeRequirementController::class, 'toggle'])->name('event-type-requirements.toggle');
         Route::delete('event-type-requirements/{eventTypeRequirement}', [EventTypeRequirementController::class, 'destroy'])->name('event-type-requirements.destroy');
+
+        // Financial years
+        Route::get('financial-years/carry-forwards', [FinancialYearController::class, 'carryForwards'])->name('financial-years.carry-forwards');
+        Route::patch('financial-years/{financial_year}/current', [FinancialYearController::class, 'setCurrent'])->name('financial-years.set-current');
+        Route::post('financial-years/{financial_year}/close', [FinancialYearController::class, 'close'])->name('financial-years.close');
+        Route::post('financial-years/{financial_year}/reopen', [FinancialYearController::class, 'reopen'])->name('financial-years.reopen');
+        Route::post('financial-years/{financial_year}/generate-weeks', [FinancialYearController::class, 'generateWeeks'])->name('financial-years.generate-weeks');
+        Route::post('carry-forwards/{carry_forward}/approve', [FinancialYearController::class, 'approveCarryForward'])->name('carry-forwards.approve');
+        Route::post('carry-forwards/{carry_forward}/reject', [FinancialYearController::class, 'rejectCarryForward'])->name('carry-forwards.reject');
+        Route::resource('financial-years', FinancialYearController::class);
+
+        // External bookings management
+        Route::get('bookings', [BookingManagementController::class, 'index'])->name('bookings.index');
+        Route::get('bookings/{booking}', [BookingManagementController::class, 'show'])->name('bookings.show');
+        Route::patch('bookings/{booking}/review', [BookingManagementController::class, 'review'])->name('bookings.review');
+        Route::post('bookings/{booking}/approve', [BookingManagementController::class, 'approve'])->name('bookings.approve');
+        Route::post('bookings/{booking}/reject', [BookingManagementController::class, 'reject'])->name('bookings.reject');
+        Route::post('bookings/{booking}/quotation', [BookingManagementController::class, 'generateQuotation'])->name('bookings.quotation');
+        Route::post('bookings/{booking}/convert-to-event', [BookingManagementController::class, 'convertToEvent'])->name('bookings.convert-to-event');
+        Route::get('bookings/{booking}/review-requirements', [BookingManagementController::class, 'reviewRequirements'])->name('bookings.review-requirements');
+        Route::post('bookings/{booking}/process-conversion', [BookingManagementController::class, 'processConversion'])->name('bookings.process-conversion');
     });
 });

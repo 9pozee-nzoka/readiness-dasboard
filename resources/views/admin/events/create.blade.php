@@ -3,6 +3,31 @@
 
     <div class="max-w-5xl" x-data="eventCreator()" x-init="init()">
 
+        <!-- FY Filter -->
+        <div class="mb-4">
+            <form method="GET" class="flex items-center gap-3">
+                <label for="fy-filter" class="text-sm font-medium text-gray-700">Financial Year:</label>
+                <select
+                    id="fy-filter"
+                    name="fy"
+                    onchange="this.form.submit()"
+                    class="rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
+                >
+                    @foreach($financialYears as $fy)
+                        <option value="{{ $fy->id }}" @selected($fy->id == $selectedFyId)>
+                            {{ $fy->name }} @if($fy->is_current)(Current)@endif
+                        </option>
+                    @endforeach
+                </select>
+            </form>
+        </div>
+
+        @if(session('info'))
+            <div class="mb-4 bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg text-sm">
+                {{ session('info') }}
+            </div>
+        @endif
+
         <form method="POST" action="{{ route('admin.events.store') }}" class="space-y-6" id="event-form">
             @csrf
 
@@ -21,7 +46,7 @@
                             <option value="">Select a week…</option>
                             @foreach ($weeks as $week)
                                 <option value="{{ $week->id }}" @selected(old('planning_week_id', $selectedWeekId ?? null) == $week->id)>
-                                    {{ $week->label }}{{ $week->is_current ? ' (Current)' : '' }}
+                                    {{ $week->label }}{{ $week->is_current ? ' (Current)' : '' }} - {{ $week->schedule_reference ?? 'N/A' }}
                                 </option>
                             @endforeach
                         </select>

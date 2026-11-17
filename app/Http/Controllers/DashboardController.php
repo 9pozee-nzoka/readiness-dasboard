@@ -5,20 +5,41 @@ namespace App\Http\Controllers;
 use App\Enums\Priority;
 use App\Models\Department;
 use App\Models\Event;
+use App\Models\FinancialYear;
 use App\Models\Notification;
 use App\Models\OutsourcedService;
 use App\Models\PlanningWeek;
 use App\Models\Requirement;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request): View|RedirectResponse
     {
+        // Auto-update current week marker
+        PlanningWeek::updateCurrentWeek();
+
         $user = Auth::user();
-        $weeks = PlanningWeek::orderBy('week_start', 'desc')->get();
+
+        // Redirect clients to their bookings page
+        if ($user->isClient()) {
+            return redirect()->route('bookings.my-bookings');
+        }
+
+        // Financial year filter
+        $financialYears = FinancialYear::orderByDesc('start_date')->get();
+        $selectedFyId = $request->integer('fy') ?: FinancialYear::where('is_current', true)->value('id');
+        $selectedFy = $financialYears->firstWhere('id', $selectedFyId);
+
+        // Get weeks for selected FY
+        $weeksQuery = PlanningWeek::orderBy('week_start', 'desc');
+        if ($selectedFyId) {
+            $weeksQuery->where('financial_year_id', $selectedFyId);
+        }
+        $weeks = $weeksQuery->get();
 
         $selectedWeekId = $request->integer('week') ?: PlanningWeek::where('is_current', true)->value('id');
 
@@ -81,21 +102,21 @@ class DashboardController extends Controller
         // Director-specific enriched data
         if ($user->isDirector()) {
             return $this->directorView(
-                $weeks, $selectedWeek, $events, $departments,
+                $financialYears, $selectedFy, $weeks, $selectedWeek, $events, $departments,
                 $totalEvents, $fullyReady, $inProgress, $notStarted,
                 $averageReadiness, $criticalAlerts, $overdueCount,
             );
         }
 
         return view('dashboard.index', compact(
-            'weeks', 'selectedWeek', 'events', 'departments',
+            'financialYears', 'selectedFy', 'weeks', 'selectedWeek', 'events', 'departments',
             'totalEvents', 'fullyReady', 'inProgress', 'notStarted', 'averageReadiness',
             'criticalAlerts', 'overdueCount', 'myRequirements',
         ));
     }
 
     private function directorView(
-        $weeks, $selectedWeek, $events, $departments,
+        $financialYears, $selectedFy, $weeks, $selectedWeek, $events, $departments,
         int $totalEvents, int $fullyReady, int $inProgress, int $notStarted,
         int $averageReadiness, $criticalAlerts, int $overdueCount,
     ): View {
@@ -212,7 +233,7 @@ class DashboardController extends Controller
         })->values();
 
         return view('dashboard.director', compact(
-            'weeks', 'selectedWeek', 'events', 'departments', 'deptReadiness', 'deptPanelData',
+            'financialYears', 'selectedFy', 'weeks', 'selectedWeek', 'events', 'departments', 'deptReadiness', 'deptPanelData',
             'totalEvents', 'fullyReady', 'inProgress', 'notStarted',
             'averageReadiness', 'criticalAlerts', 'overdueCount',
             'atRiskEvents', 'totalReqs', 'completedReqs', 'completionRate',

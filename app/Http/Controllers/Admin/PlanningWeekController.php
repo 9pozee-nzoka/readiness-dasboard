@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\ImportWeeklyScheduleRequest;
 use App\Http\Requests\Admin\StorePlanningWeekRequest;
 use App\Mail\ScheduleShared;
 use App\Models\Department;
+use App\Models\FinancialYear;
 use App\Models\Notification;
 use App\Models\PlanningWeek;
 use App\Models\User;
@@ -23,19 +24,41 @@ class PlanningWeekController extends Controller
         abort_unless(auth()->user()?->isAdmin(), 403);
     }
 
-    public function index(): View
+    public function index(Request $request): View
     {
-        $weeks = PlanningWeek::query()
-            ->withCount('events')
-            ->orderByDesc('week_start')
-            ->get();
+        $financialYears = FinancialYear::orderByDesc('start_date')->get();
+        $selectedFyId = $request->integer('fy') ?: FinancialYear::where('is_current', true)->value('id');
 
-        return view('admin.planning-weeks.index', compact('weeks'));
+        $weeksQuery = PlanningWeek::query()->withCount('events');
+
+        if ($selectedFyId) {
+            $weeksQuery->where('financial_year_id', $selectedFyId);
+        }
+
+        $weeks = $weeksQuery->orderByDesc('week_start')->get();
+
+        return view('admin.planning-weeks.index', compact('weeks', 'financialYears', 'selectedFyId'));
     }
 
-    public function create(): View
+    public function create(Request $request): View
     {
-        return view('admin.planning-weeks.create');
+        $financialYears = FinancialYear::orderByDesc('start_date')->get();
+        $selectedFyId = $request->integer('fy') ?: FinancialYear::where('is_current', true)->value('id');
+
+        // Auto-generate weeks if FY is selected and has no weeks
+        if ($selectedFyId) {
+            $fy = FinancialYear::find($selectedFyId);
+            $weekCount = $fy->planningWeeks()->count();
+
+            if ($weekCount === 0) {
+                $created = $fy->generateWeeks('NRB');
+                if ($created > 0) {
+                    session()->flash('info', "Auto-generated {$created} planning weeks for {$fy->name}.");
+                }
+            }
+        }
+
+        return view('admin.planning-weeks.create', compact('financialYears', 'selectedFyId'));
     }
 
     public function store(StorePlanningWeekRequest $request): RedirectResponse
